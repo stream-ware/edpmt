@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 from typing import Dict, Optional
 import argparse
+import socket
 
 try:
     from portkeeper import PortRegistry
@@ -86,16 +87,35 @@ class EDPMTPortManager:
                 if current_value and current_value.isdigit():
                     preferred_port = int(current_value)
                 
-                # Reserve port using portkeeper
-                reservation = self.registry.reserve(
-                    preferred=preferred_port,
-                    owner=f"edpmt-frontend-{profile_name}",
-                    hold=True
-                )
+                # Reserve port using portkeeper with backward-compatible signature handling
+                reservation = None
+                owner = f"edpmt-frontend-{profile_name}"
+                try:
+                    # Newer API (preferred=, hold=, owner=)
+                    reservation = self.registry.reserve(preferred=preferred_port, owner=owner, hold=True)
+                except TypeError:
+                    try:
+                        # Alternate API (port=, owner=, hold=)
+                        reservation = self.registry.reserve(port=preferred_port, owner=owner, hold=True)
+                    except TypeError:
+                        # Minimal API (positional or no kwargs)
+                        if preferred_port:
+                            reservation = self.registry.reserve(preferred_port)
+                        else:
+                            reservation = self.registry.reserve()
+                except Exception:
+                    reservation = None
                 
-                allocated_port = reservation.port
-                allocated_ports[profile_name] = allocated_port
-                self.reservations[profile_name] = reservation
+                if reservation is not None:
+                    allocated_port = reservation.port
+                    allocated_ports[profile_name] = allocated_port
+                    self.reservations[profile_name] = reservation
+                else:
+                    # Fallback: use system-assigned free port
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                        s.bind(("127.0.0.1", 0))
+                        allocated_port = s.getsockname()[1]
+                    allocated_ports[profile_name] = allocated_port
                 
                 # Update .env file using our custom method
                 self._update_env_var(env_var, str(allocated_port))

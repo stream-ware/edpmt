@@ -156,11 +156,29 @@ test-examples:
 	@echo "✅ Example tests complete"
 
 # Run all tests
-test-all: test-e2e-bash test-e2e-python test-gpio test-i2c test-spi test-uart test-examples
+test-all: test-e2e-bash test-e2e-python test-gpio test-i2c test-spi test-uart test-examples test-transparent test-utils test-integration
 	@echo "🎉 All EDPMT tests complete!"
 
 # Standard test target (alias for test-all)
 test: test-all
+
+# Test EDPMTransparent functionality
+test-transparent:
+	@echo "🔍 Testing EDPMTransparent functionality..."
+	@python tests/test_transparent.py
+	@echo "✅ EDPMTransparent tests complete"
+
+# Test utility functions
+test-utils:
+	@echo "🔧 Testing utility functions..."
+	@python tests/test_utils.py
+	@echo "✅ Utility tests complete"
+
+# Test integration between modules
+test-integration:
+	@echo "🔗 Testing module integration..."
+	@python tests/test_integration.py
+	@echo "✅ Integration tests complete"
 
 # ==============================================================================
 # SERVER OPERATIONS

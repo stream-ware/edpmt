@@ -41,8 +41,8 @@ STATIC_DIR := static
 export
 
 # Default ports (will be overridden by .env after allocation)
-HTTP_PORT ?= 8086
-WEBSOCKET_PORT ?= 8086
+HTTP_PORT ?= 8085
+WEBSOCKET_PORT ?= 8085
 
 # Check if dependencies are installed
 check-deps:
@@ -52,6 +52,7 @@ check-deps:
 		(echo "❌ Missing Python dependencies. Run 'make install' first." && exit 1)
 	@$(PYTHON) -c "import sys; sys.path.insert(0, '../..'); import edpmt" 2>/dev/null || \
 		(echo "❌ EDPMT not found. Please install EDPMT first." && exit 1)
+	@command -v curl >/dev/null 2>&1 || (echo "❌ 'curl' is required for health checks" && exit 1)
 	@echo "✅ All dependencies are available"
 
 # Install dependencies using requirements.txt
@@ -79,7 +80,7 @@ setup:
 	@echo "✅ Setup completed - example projects created"
 
 # Run in development mode (unified server serves static + WebSocket under /ws)
-dev: stop check-deps setup
+dev: stop check-deps test setup check-ports
 	@echo "🚀 Starting EDPMT Complete Frontend (Development Mode)..."
 	@echo "🔧 Using hardware simulators - safe for development"
 	@echo ""
@@ -91,6 +92,16 @@ dev: stop check-deps setup
 	@echo "   - Use 'make stop' to shut down the server."
 	@echo "   - Logs are in the '$(LOG_DIR)' directory."
 	@echo ""
+
+# Check if target port is free (returns non-zero if busy)
+check-ports:
+	@echo "🔎 Checking port availability..."
+	@if ss -ltn | awk '{print $$4}' | grep -q ":$(HTTP_PORT)\>"; then \
+		echo "🔴 Port $(HTTP_PORT) is already in use"; \
+		exit 1; \
+	else \
+		echo "🟢 Port $(HTTP_PORT) is free"; \
+	fi
 
 # Run without port allocation (use existing ports from .env)
 dev-quick: check-deps setup
@@ -138,7 +149,7 @@ status:
 	@echo "🔍 EDPMT Complete Frontend Status:"
 	@echo "=================================="
 	@pgrep -f "$(SERVER_SCRIPT)" >/dev/null && echo "🟢 Server: Running" || echo "🔴 Server: Stopped"
-	@curl -s http://localhost:$(FRONTEND_PORT)/api/status >/dev/null 2>&1 && echo "🟢 HTTP API: Responsive" || echo "🔴 HTTP API: Not responding"
+	@curl -s http://localhost:$(HTTP_PORT)/api/status >/dev/null 2>&1 && echo "🟢 HTTP API: Responsive" || echo "🔴 HTTP API: Not responding"
 	@test -f $(LOG_DIR)/server*.log && echo "📄 Logs: Available in $(LOG_DIR)/" || echo "📄 Logs: None found"
 	@test -d $(PROJECTS_DIR) && echo "📁 Projects: $(shell ls $(PROJECTS_DIR)/*.json 2>/dev/null | wc -l) projects available" || echo "📁 Projects: Directory not found"
 
@@ -161,8 +172,8 @@ quick-ref:
 	@echo "🧪 Run Tests:          make test"
 	@echo "🧹 Clean Files:        make clean"
 	@echo ""
-	@echo "📄 Frontend URL:       http://localhost:$(FRONTEND_PORT)"
-	@echo "🔌 WebSocket URL:      ws://localhost:$(WEBSOCKET_PORT)"
+	@echo "📄 Frontend URL:       http://localhost:$(HTTP_PORT)"
+	@echo "🔌 WebSocket URL:      ws://localhost:$(HTTP_PORT)/ws"
 	@echo "📁 Projects Dir:       $(PROJECTS_DIR)/"
 	@echo "📄 Logs Dir:           $(LOG_DIR)/"
 	@echo ""
@@ -176,11 +187,11 @@ docker-build:
 
 docker-run:
 	@echo "🐳 Running Docker container..."
-	@docker run -d -p $(FRONTEND_PORT):$(FRONTEND_PORT) -p $(WEBSOCKET_PORT):$(WEBSOCKET_PORT) \
+	@docker run -d -p $(HTTP_PORT):$(HTTP_PORT) -p $(WEBSOCKET_PORT):$(WEBSOCKET_PORT) \
 		--name edpmt-frontend edpmt-frontend || \
 		(echo "❌ Docker run failed" && exit 1)
 	@echo "✅ Docker container started"
-	@echo "📄 Frontend: http://localhost:$(FRONTEND_PORT)"
+	@echo "📄 Frontend: http://localhost:$(HTTP_PORT)"
 
 docker-stop:
 	@echo "🐳 Stopping Docker container..."
@@ -193,3 +204,77 @@ targets:
 	@echo "=========================="
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) 2>/dev/null || \
 	grep -E '^[a-zA-Z_-]+:' $(MAKEFILE_LIST) | grep -v '^#' | sed 's/:.*//g' | sort
+
+# Test the complete solution (starts a temporary server and probes endpoints)
+test: check-deps
+	@echo "🧪 Testing EDPMT Complete Frontend..."
+	@echo "1) Python imports..."
+	@$(PYTHON) -c "import sys; sys.path.insert(0, '../../..'); import edpmt; print('✅ EDPMT import successful')"
+	@$(PYTHON) -c "import websockets, asyncio, json, aiohttp, aiohttp_cors; print('✅ Python dependencies available')"
+	@echo "2) Module load..."
+	@$(PYTHON) -c "from $(basename $(SERVER_SCRIPT) .py) import EDPMTWebServer; print('✅ Server module loads correctly')"
+	@echo "3) Static assets..."
+	@test -f index.html && echo "✅ Frontend HTML found" || (echo "❌ Frontend HTML missing" && exit 1)
+	@test -f styles.css && echo "✅ Frontend CSS found" || (echo "❌ Frontend CSS missing" && exit 1)
+	@test -d js && echo "✅ JavaScript directory found" || (echo "❌ JavaScript directory missing" && exit 1)
+	@test -f js/main.js && echo "✅ Main JavaScript found" || (echo "❌ Main JavaScript missing" && exit 1)
+	@test -f js/edpmt-client.js && echo "✅ EDPMT client found" || (echo "❌ EDPMT client missing" && exit 1)
+	@echo "4) Example projects..."
+	@test -d $(PROJECTS_DIR) || mkdir -p $(PROJECTS_DIR)
+	@ls $(PROJECTS_DIR)/*.json >/dev/null 2>&1 && echo "✅ Example projects found" || echo "ℹ️  No example projects (run 'make setup')"
+	@echo "5) Temporary server health checks..."
+	@TEST_PORT=$$(python3 -c "import socket; s=socket.socket(); s.bind(('127.0.0.1',0)); print(s.getsockname()[1]); s.close()") ; \
+	echo "   • Starting test server on $$TEST_PORT..." ; \
+	$(PYTHON) $(SERVER_SCRIPT) --http-port $$TEST_PORT > $(LOG_DIR)/server-test.log 2>&1 & echo $$! > .server-test.pid ; \
+	for i in $$(seq 1 20); do \
+		code=$$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$$TEST_PORT/ || true); \
+		if [ "$$code" = "200" ]; then echo "   • HTTP ready (200)"; break; fi; \
+		sleep 1; \
+		if [ $$i -eq 20 ]; then echo "❌ Server failed to start"; tail -n 100 $(LOG_DIR)/server-test.log || true; kill $$(cat .server-test.pid) 2>/dev/null || true; rm -f .server-test.pid; exit 1; fi; \
+	done; \
+	status_code=$$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$$TEST_PORT/api/status || true); \
+	proj_code=$$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$$TEST_PORT/api/projects || true); \
+	rc_code=$$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$$TEST_PORT/runtime-config.js || true); \
+	echo "   • /api/status -> $$status_code"; \
+	echo "   • /api/projects -> $$proj_code"; \
+	echo "   • /runtime-config.js -> $$rc_code"; \
+	if [ "$$status_code" != "200" ] || [ "$$proj_code" != "200" ] || [ "$$rc_code" != "200" ]; then \
+		echo "❌ Endpoint checks failed"; tail -n 100 $(LOG_DIR)/server-test.log || true; kill $$(cat .server-test.pid) 2>/dev/null || true; rm -f .server-test.pid; exit 1; \
+	fi; \
+	export TEST_PORT; \
+	python3 - <<'PY'
+import asyncio, os, sys
+import websockets
+port = int(os.environ['TEST_PORT'])
+async def main():
+	try:
+		async with websockets.connect(f"ws://localhost:{port}/ws") as ws:
+			await ws.send('{"type":"ping"}')
+		print("   • WebSocket handshake OK")
+	except Exception as e:
+		print(f"❌ WebSocket check failed: {e}")
+		sys.exit(1)
+asyncio.run(main())
+PY
+	kill $$(cat .server-test.pid) 2>/dev/null || true; rm -f .server-test.pid; \
+	echo "✅ All tests passed!"
+
+# Continuous monitoring: check endpoints every 5s and tail logs
+monitor:
+	@echo "📡 Monitoring http://localhost:$(HTTP_PORT) every 5s (Ctrl+C to stop)..."
+	@set -e; \
+	trap 'kill $$TAIL_PID >/dev/null 2>&1 || true' INT TERM EXIT; \
+	mkdir -p $(LOG_DIR); touch $(LOG_DIR)/server-dev.log; \
+	echo "——— Tailing $(LOG_DIR)/server-dev.log ———"; \
+	tail -n 50 -F $(LOG_DIR)/server-dev.log & \
+	TAIL_PID=$$!; \
+	while true; do \
+		NOW=$$(date '+%Y-%m-%d %H:%M:%S'); \
+		HTTP_CODE=$$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$(HTTP_PORT)/ || true); \
+		STATUS_CODE=$$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$(HTTP_PORT)/api/status || true); \
+		echo "$$NOW | / -> $$HTTP_CODE | /api/status -> $$STATUS_CODE"; \
+		sleep 5; \
+	done
+
+# Start dev then monitor continuously
+dev-watch: dev monitor
