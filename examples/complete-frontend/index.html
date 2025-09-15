@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDPMT Complete Frontend - Visual Programming & Peripheral Control</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Top Navigation -->
+        <nav class="top-nav">
+            <div class="nav-brand">
+                <i class="fas fa-microchip"></i>
+                <span>EDPMT Complete Frontend</span>
+            </div>
+            <div class="nav-status">
+                <div class="status-indicator" id="backend-status">
+                    <i class="fas fa-circle"></i>
+                    <span>Backend: <span id="connection-status">Connecting...</span></span>
+                </div>
+                <div class="status-indicator" id="hardware-status">
+                    <i class="fas fa-cog"></i>
+                    <span>Hardware: <span id="hardware-mode">Unknown</span></span>
+                </div>
+            </div>
+            <div class="nav-actions">
+                <button class="nav-btn" id="settings-btn">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
+                <button class="nav-btn" id="help-btn">
+                    <i class="fas fa-question-circle"></i> Help
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Left Sidebar - Visual Programming -->
+            <div class="sidebar left-sidebar">
+                <div class="sidebar-header">
+                    <h3><i class="fas fa-puzzle-piece"></i> Visual Programming</h3>
+                    <div class="sidebar-actions">
+                        <button class="btn-icon" id="new-project-btn" title="New Project">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button class="btn-icon" id="save-project-btn" title="Save Project">
+                            <i class="fas fa-save"></i>
+                        </button>
+                        <button class="btn-icon" id="load-project-btn" title="Load Project">
+                            <i class="fas fa-folder-open"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Block Palette Tabs -->
+                <div class="palette-tabs">
+                    <button class="tab-btn active" data-tab="blocks">
+                        <i class="fas fa-cubes"></i> Blocks
+                    </button>
+                    <button class="tab-btn" data-tab="projects">
+                        <i class="fas fa-project-diagram"></i> Projects
+                    </button>
+                    <button class="tab-btn" data-tab="templates">
+                        <i class="fas fa-file-code"></i> Templates
+                    </button>
+                </div>
+
+                <!-- Block Palette Content -->
+                <div class="palette-content">
+                    <div class="tab-panel active" id="blocks-panel">
+                        <div class="block-category">
+                            <h4><i class="fas fa-microchip"></i> GPIO</h4>
+                            <div class="block-list">
+                                <div class="block" draggable="true" data-type="gpio-set">
+                                    <i class="fas fa-toggle-on"></i>
+                                    <span>GPIO Set</span>
+                                </div>
+                                <div class="block" draggable="true" data-type="gpio-get">
+                                    <i class="fas fa-toggle-off"></i>
+                                    <span>GPIO Read</span>
+                                </div>
+                                <div class="block" draggable="true" data-type="gpio-pwm">
+                                    <i class="fas fa-wave-square"></i>
+                                    <span>GPIO PWM</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="block-category">
+                            <h4><i class="fas fa-exchange-alt"></i> I2C/SPI</h4>
+                            <div class="block-list">
+                                <div class="block" draggable="true" data-type="i2c-scan">
+                                    <i class="fas fa-search"></i>
+                                    <span>I2C Scan</span>
+                                </div>
+                                <div class="block" draggable="true" data-type="i2c-read">
+                                    <i class="fas fa-download"></i>
+                                    <span>I2C Read</span>
+                                </div>
+                                <div class="block" draggable="true" data-type="i2c-write">
+                                    <i class="fas fa-upload"></i>
+                                    <span>I2C Write</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="block-category">
+                            <h4><i class="fas fa-brain"></i> Logic</h4>
+                            <div class="block-list">
+                                <div class="block" draggable="true" data-type="if-condition">
+                                    <i class="fas fa-question"></i>
+                                    <span>If Condition</span>
+                                </div>
+                                <div class="block" draggable="true" data-type="while-loop">
+                                    <i class="fas fa-redo"></i>
+                                    <span>While Loop</span>
+                                </div>
+                                <div class="block" draggable="true" data-type="repeat">
+                                    <i class="fas fa-sync"></i>
+                                    <span>Repeat</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="block-category">
+                            <h4><i class="fas fa-clock"></i> Timing</h4>
+                            <div class="block-list">
+                                <div class="block" draggable="true" data-type="delay">
+                                    <i class="fas fa-hourglass-half"></i>
+                                    <span>Delay</span>
+                                </div>
+                                <div class="block" draggable="true" data-type="timer">
+                                    <i class="fas fa-stopwatch"></i>
+                                    <span>Timer</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-panel" id="projects-panel">
+                        <div class="project-list" id="project-list">
+                            <!-- Projects loaded dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="tab-panel" id="templates-panel">
+                        <div class="template-list" id="template-list">
+                            <!-- Templates loaded dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Canvas Area -->
+            <div class="main-content">
+                <div class="canvas-header">
+                    <div class="canvas-title">
+                        <input type="text" id="project-name" placeholder="Untitled Project" value="New Project">
+                        <span class="project-status" id="project-status">Not saved</span>
+                    </div>
+                    <div class="canvas-controls">
+                        <button class="btn success" id="run-project-btn">
+                            <i class="fas fa-play"></i> Run
+                        </button>
+                        <button class="btn warning" id="stop-project-btn">
+                            <i class="fas fa-stop"></i> Stop
+                        </button>
+                        <button class="btn" id="clear-canvas-btn">
+                            <i class="fas fa-eraser"></i> Clear
+                        </button>
+                        <button class="btn" id="edit-page-btn">
+                            <i class="fas fa-edit"></i> Edit Page
+                        </button>
+                    </div>
+                </div>
+
+                <div class="canvas-area">
+                    <div class="programming-canvas" id="programming-canvas">
+                        <div class="canvas-placeholder">
+                            <i class="fas fa-hand-pointer"></i>
+                            <p>Drag blocks here to create your program</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="execution-log">
+                    <div class="log-header">
+                        <h4><i class="fas fa-terminal"></i> Execution Log</h4>
+                        <button class="btn-small" id="clear-log-btn">Clear</button>
+                    </div>
+                    <div class="log-content" id="log-content">
+                        <div class="log-entry info">
+                            <span class="timestamp">17:01:51</span>
+                            <span class="message">System ready. Drag blocks to start programming.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar - Peripheral Control -->
+            <div class="sidebar right-sidebar">
+                <div class="sidebar-header">
+                    <h3><i class="fas fa-cogs"></i> Peripheral Control</h3>
+                    <div class="sidebar-actions">
+                        <button class="btn-icon" id="refresh-status-btn" title="Refresh Status">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="btn-icon" id="emergency-stop-btn" title="Emergency Stop">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Peripheral Control Tabs -->
+                <div class="control-tabs">
+                    <button class="tab-btn active" data-tab="gpio-control">
+                        <i class="fas fa-microchip"></i> GPIO
+                    </button>
+                    <button class="tab-btn" data-tab="protocol-control">
+                        <i class="fas fa-exchange-alt"></i> Protocols
+                    </button>
+                    <button class="tab-btn" data-tab="monitor-control">
+                        <i class="fas fa-chart-line"></i> Monitor
+                    </button>
+                </div>
+
+                <!-- GPIO Control Panel -->
+                <div class="control-panel active" id="gpio-control">
+                    <div class="panel-section">
+                        <h4>GPIO Pin Status</h4>
+                        <div class="gpio-grid" id="gpio-grid">
+                            <!-- GPIO pins loaded dynamically -->
+                        </div>
+                    </div>
+
+                    <div class="panel-section">
+                        <h4>Quick Commands</h4>
+                        <div class="quick-commands">
+                            <button class="cmd-btn" data-command="led-blink">
+                                <i class="fas fa-lightbulb"></i>
+                                LED Blink
+                            </button>
+                            <button class="cmd-btn" data-command="all-pins-low">
+                                <i class="fas fa-power-off"></i>
+                                All Pins Low
+                            </button>
+                            <button class="cmd-btn" data-command="pin-sweep">
+                                <i class="fas fa-wave-square"></i>
+                                Pin Sweep
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="panel-section">
+                        <h4>Custom Command</h4>
+                        <div class="custom-command">
+                            <select id="gpio-action">
+                                <option value="set">Set Pin</option>
+                                <option value="get">Read Pin</option>
+                                <option value="pwm">PWM Control</option>
+                            </select>
+                            <input type="number" id="gpio-pin" placeholder="Pin #" min="0" max="40">
+                            <input type="number" id="gpio-value" placeholder="Value" min="0" max="1">
+                            <button class="btn" id="execute-gpio-cmd">Execute</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Protocol Control Panel -->
+                <div class="control-panel" id="protocol-control">
+                    <div class="panel-section">
+                        <h4>I2C Bus Status</h4>
+                        <div class="protocol-status">
+                            <div class="status-item">
+                                <span>Bus 1:</span>
+                                <span class="status-value" id="i2c-status">Active</span>
+                                <button class="btn-small" id="i2c-scan-btn">Scan</button>
+                            </div>
+                            <div class="device-list" id="i2c-devices">
+                                <!-- I2C devices loaded dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-section">
+                        <h4>SPI Status</h4>
+                        <div class="protocol-status">
+                            <div class="status-item">
+                                <span>SPI0:</span>
+                                <span class="status-value" id="spi-status">Ready</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-section">
+                        <h4>UART Status</h4>
+                        <div class="protocol-status">
+                            <div class="status-item">
+                                <span>UART0:</span>
+                                <span class="status-value" id="uart-status">9600 baud</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Monitor Panel -->
+                <div class="control-panel" id="monitor-control">
+                    <div class="panel-section">
+                        <h4>Real-time Monitoring</h4>
+                        <canvas id="monitor-chart" width="280" height="200"></canvas>
+                    </div>
+
+                    <div class="panel-section">
+                        <h4>System Information</h4>
+                        <div class="system-info">
+                            <div class="info-item">
+                                <span>CPU:</span>
+                                <span id="cpu-usage">0%</span>
+                            </div>
+                            <div class="info-item">
+                                <span>Memory:</span>
+                                <span id="memory-usage">0%</span>
+                            </div>
+                            <div class="info-item">
+                                <span>Temperature:</span>
+                                <span id="system-temp">0°C</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modals -->
+        <!-- Block Editor Modal -->
+        <div class="modal" id="block-editor-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-edit"></i> Edit Block Logic</h3>
+                    <button class="modal-close" data-modal="block-editor-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="editor-tabs">
+                        <button class="tab-btn active" data-tab="visual-editor">Visual</button>
+                        <button class="tab-btn" data-tab="json-editor">JSON</button>
+                    </div>
+                    
+                    <div class="editor-content">
+                        <div class="tab-panel active" id="visual-editor">
+                            <form id="block-form">
+                                <div class="form-group">
+                                    <label>Block Type:</label>
+                                    <select id="block-type-select">
+                                        <option value="gpio-set">GPIO Set</option>
+                                        <option value="gpio-get">GPIO Read</option>
+                                        <option value="delay">Delay</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Description:</label>
+                                    <input type="text" id="block-description" placeholder="Block description">
+                                </div>
+                                <div class="form-group">
+                                    <label>Parameters:</label>
+                                    <div id="block-parameters">
+                                        <!-- Dynamic parameter inputs -->
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <div class="tab-panel" id="json-editor">
+                            <textarea id="json-editor-textarea" rows="15" placeholder="Edit block JSON here..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn" id="preview-block-btn">Preview</button>
+                    <button class="btn success" id="save-block-btn">Save Block</button>
+                    <button class="btn secondary" data-modal="block-editor-modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page Editor Modal -->
+        <div class="modal" id="page-editor-modal">
+            <div class="modal-content large">
+                <div class="modal-header">
+                    <h3><i class="fas fa-code"></i> Edit Page Layout</h3>
+                    <button class="modal-close" data-modal="page-editor-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="editor-tabs">
+                        <button class="tab-btn active" data-tab="html-editor">HTML</button>
+                        <button class="tab-btn" data-tab="css-editor">CSS</button>
+                        <button class="tab-btn" data-tab="js-editor">JavaScript</button>
+                    </div>
+                    
+                    <div class="editor-content">
+                        <div class="tab-panel active" id="html-editor">
+                            <textarea id="html-editor-textarea" rows="20"></textarea>
+                        </div>
+                        <div class="tab-panel" id="css-editor">
+                            <textarea id="css-editor-textarea" rows="20"></textarea>
+                        </div>
+                        <div class="tab-panel" id="js-editor">
+                            <textarea id="js-editor-textarea" rows="20"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn" id="preview-page-btn">Preview</button>
+                    <button class="btn success" id="save-page-btn">Save Changes</button>
+                    <button class="btn secondary" data-modal="page-editor-modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div class="modal" id="settings-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-cog"></i> Settings</h3>
+                    <button class="modal-close" data-modal="settings-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Backend URL:</label>
+                        <input type="text" id="backend-url" value="ws://localhost:8080">
+                    </div>
+                    <div class="form-group">
+                        <label>Update Interval (ms):</label>
+                        <input type="number" id="update-interval" value="1000" min="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Hardware Mode:</label>
+                        <select id="hardware-mode">
+                            <option value="real">Real Hardware</option>
+                            <option value="simulator">Simulator</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="enable-logging"> Enable Debug Logging
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn success" id="save-settings-btn">Save Settings</button>
+                    <button class="btn secondary" data-modal="settings-modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/edpmt-client.js"></script>
+    <script src="js/visual-programming.js"></script>
+    <script src="js/peripheral-control.js"></script>
+    <script src="js/block-editor.js"></script>
+    <script src="js/page-editor.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
