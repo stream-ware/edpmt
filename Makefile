@@ -19,14 +19,68 @@ setup-dev:
 # Install package in development mode
 install:
 	@echo "📦 Installing EDPMT in development mode..."
-	pip install -e .
-	@echo "✅ EDPMT installed"
+	@echo "🔍 Checking setuptools..."
+	@python3 -c "import setuptools" 2>/dev/null || pip3 install setuptools --user 2>/dev/null || pip3 install setuptools --break-system-packages 2>/dev/null
+	@echo "🔧 Installing EDPMT..."
+	@pip3 install -e . --user 2>/dev/null || pip3 install -e . --break-system-packages 2>/dev/null || { \
+		echo "⚠️  Standard installation failed. Trying alternative methods..."; \
+		echo "💡 Method 1: User installation"; \
+		pip3 install -e . --user || { \
+			echo "💡 Method 2: Break system packages (use with caution)"; \
+			pip3 install -e . --break-system-packages || { \
+				echo "❌ All installation methods failed."; \
+				echo "💡 Please try:"; \
+				echo "   1. Create virtual environment: python3 -m venv venv && source venv/bin/activate"; \
+				echo "   2. Use pipx: brew install pipx && pipx install -e ."; \
+				echo "   3. Manual PYTHONPATH: export PYTHONPATH=$$PWD:$$PYTHONPATH"; \
+				exit 1; \
+			}; \
+		}; \
+	}
+	@echo "🧪 Verifying installation..."
+	@python3 -c "import edpmt; print(f'✅ EDPMT {edpmt.__version__} installed successfully')" || echo "❌ Installation verification failed"
+	@echo "🎯 Testing CLI entry points..."
+	@which edpmt >/dev/null && echo "✅ CLI available at: $$(which edpmt)" || echo "⚠️  CLI not in PATH - try: export PATH=$$HOME/.local/bin:$$PATH"
 
 # Install with all optional dependencies
 install-all:
 	@echo "📦 Installing EDPMT with all dependencies..."
 	pip install -e .[all]
 	@echo "✅ EDPMT with all dependencies installed"
+
+# Development setup using PYTHONPATH (no installation required)
+dev-setup:
+	@echo "🛠️  Setting up EDPMT for development using PYTHONPATH..."
+	@echo "📁 Project root: $$(pwd)"
+	@echo "🐍 Python version: $$(python3 --version)"
+	@echo "📝 Testing EDPMT import..."
+	@PYTHONPATH="$$(pwd):$$PYTHONPATH" python3 -c "import edpmt; print(f'✅ EDPMT {edpmt.__version__} loaded via PYTHONPATH')" || { \
+		echo "❌ EDPMT import failed"; \
+		echo "💡 Make sure you're in the correct directory: $$(pwd)"; \
+		exit 1; \
+	}
+	@echo "🎯 Creating CLI wrapper script..."
+	@mkdir -p bin
+	@echo '#!/bin/bash' > bin/edpmt
+	@echo 'export PYTHONPATH="'"$$(pwd)"':$$PYTHONPATH"' >> bin/edpmt
+	@echo 'python3 -m edpmt.cli "$$@"' >> bin/edpmt
+	@chmod +x bin/edpmt
+	@echo "✅ Development setup complete!"
+	@echo "💡 To use EDPMT:"
+	@echo "   1. Add to PATH: export PATH=$$(pwd)/bin:$$PATH"
+	@echo "   2. Or use directly: ./bin/edpmt server --dev"
+	@echo "   3. Or set PYTHONPATH: export PYTHONPATH=$$(pwd):$$PYTHONPATH"
+
+# Create and setup virtual environment
+venv-setup:
+	@echo "🐍 Creating virtual environment..."
+	@python3 -m venv venv
+	@echo "📦 Installing EDPMT in virtual environment..."
+	@venv/bin/pip install --upgrade pip setuptools
+	@venv/bin/pip install -e .
+	@echo "✅ Virtual environment setup complete!"
+	@echo "💡 To activate: source venv/bin/activate"
+	@echo "💡 Then run: edpmt server --dev"
 
 # ==============================================================================
 # DOCKER OPERATIONS
