@@ -117,10 +117,37 @@ test-e2e-bash:
 	@echo "✅ Bash E2E tests complete"
 
 # Run E2E tests with Python
-test-e2e-python:
+test-e2e-python: start-test-server
 	@echo "🐍 Running E2E tests with Python..."
 	@python tests/test_e2e_complete.py
 	@echo "✅ Python E2E tests complete"
+	@$(MAKE) stop-test-server
+
+# Start test server for E2E tests
+start-test-server:
+	@echo "🚀 Starting test server for E2E tests..."
+	@python tests/manual_server_test.py > test-results/test_server.log 2>&1 &
+	@echo $$! > test-results/test_server.pid
+	@echo "⏳ Waiting for test server to start..."
+	@sleep 5
+	@if ! curl -s http://localhost:8891/health > /dev/null; then \
+		echo "⚠️ Test server not responding, waiting a bit longer..."; \
+		sleep 5; \
+		if ! curl -s http://localhost:8891/health > /dev/null; then \
+			echo "❌ Test server failed to start, check test-results/test_server.log"; \
+			exit 1; \
+		fi; \
+	fi
+	@echo "✅ Test server started"
+
+# Stop test server after E2E tests
+stop-test-server:
+	@echo "🛑 Stopping test server..."
+	@if [ -f test-results/test_server.pid ]; then \
+		kill `cat test-results/test_server.pid` 2>/dev/null || true; \
+		rm -f test-results/test_server.pid; \
+	fi
+	@echo "✅ Test server stopped"
 
 # Test GPIO functionality
 test-gpio:

@@ -55,40 +55,18 @@ class EDPMTEndToEndTests:
         self.log_file = log_file
     
     async def start_test_server(self):
-        """Start EDPMT server for testing"""
-        self.logger.info("🚀 Starting EDPMT test server...")
+        """Connect to a pre-running EDPMT server for testing"""
+        self.logger.info("🔗 Connecting to pre-running EDPMT test server...")
         
         try:
-            # Start server with development configuration
-            self.logger.info("🔧 Creating EDPMTransparent instance with config: dev_mode=True, port=8891, host=localhost, tls=False, hardware_simulators=True")
-            self.server = EDPMTransparent(
-                name="EDPMT-E2E-Test",
-                config={
-                    'dev_mode': True,
-                    'port': 8891,
-                    'host': 'localhost',
-                    'tls': False,  # Disable TLS for testing to avoid certificate issues
-                    'hardware_simulators': True
-                }
-            )
-            
-            self.logger.info("🚀 Starting server in background task...")
-            # Start server in background task
-            self.server_task = asyncio.create_task(self.server.start_server())
-            self.logger.info("⏳ Server task created, waiting for server to be ready...")
-            
-            # Add a longer delay to ensure server has time to initialize
-            self.logger.info("⏲️ Adding a delay of 10 seconds before waiting for server...")
-            await asyncio.sleep(10)
-            
             # Wait for server to be ready (connection check)
             await self.wait_for_server()
             
-            self.logger.info("✅ Test server started successfully")
+            self.logger.info("✅ Connected to test server successfully")
             return True
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to start test server: {e}", exc_info=True)
+            self.logger.error(f"❌ Failed to connect to test server: {e}", exc_info=True)
             return False
     
     async def wait_for_server(self, timeout=120):
@@ -116,16 +94,10 @@ class EDPMTEndToEndTests:
         raise TimeoutError(f"Server did not start within {timeout} seconds")
     
     async def cleanup(self):
-        """Cleanup test server"""
-        if self.server:
-            self.logger.info("🛑 Stopping test server...")
-            try:
-                await self.server.close()
-                self.server_task.cancel()
-                await asyncio.sleep(1)
-                self.logger.info("✅ Server stopped")
-            except Exception as e:
-                self.logger.warning(f"⚠️  Error stopping server: {e}")
+        """Cleanup test resources"""
+        self.logger.info("🧹 Cleaning up test resources...")
+        # No need to stop the server since it's managed externally
+        self.logger.info("✅ Cleanup complete")
     
     def record_test(self, name, passed, error=None, duration=None):
         """Record test result"""
