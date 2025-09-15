@@ -97,7 +97,6 @@ def generate_certificates(cert_file: Path, key_file: Path,
     ]
     
     try:
-        import ipaddress
         # Add local network interfaces
         import socket
         hostname = socket.gethostname()

@@ -1,0 +1,3 @@
+#!/bin/bash
+export PYTHONPATH="/home/tom/github/stream-ware/edpmt:$PYTHONPATH"
+python3 -m edpmt.cli "$@"
