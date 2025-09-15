@@ -9,38 +9,11 @@ all: setup-dev install test-all
 
 # Setup development environment
 setup-dev:
-	@echo "🔧 Setting up EDPMT development environment..."
-	@mkdir -p tests
-	@mkdir -p test-results  
-	@mkdir -p examples/gpio-frontend
-	@mkdir -p logs
-	@echo "✅ Development environment ready"
+	@bash scripts/setup-dev.sh
 
 # Install package in development mode
 install:
-	@echo "📦 Installing EDPMT in development mode..."
-	@echo "🔍 Checking setuptools..."
-	@python3 -c "import setuptools" 2>/dev/null || pip3 install setuptools --user 2>/dev/null || pip3 install setuptools --break-system-packages 2>/dev/null
-	@echo "🔧 Installing EDPMT..."
-	@pip3 install -e . --user 2>/dev/null || pip3 install -e . --break-system-packages 2>/dev/null || { \
-		echo "⚠️  Standard installation failed. Trying alternative methods..."; \
-		echo "💡 Method 1: User installation"; \
-		pip3 install -e . --user || { \
-			echo "💡 Method 2: Break system packages (use with caution)"; \
-			pip3 install -e . --break-system-packages || { \
-				echo "❌ All installation methods failed."; \
-				echo "💡 Please try:"; \
-				echo "   1. Create virtual environment: python3 -m venv venv && source venv/bin/activate"; \
-				echo "   2. Use pipx: brew install pipx && pipx install -e ."; \
-				echo "   3. Manual PYTHONPATH: export PYTHONPATH=$$PWD:$$PYTHONPATH"; \
-				exit 1; \
-			}; \
-		}; \
-	}
-	@echo "🧪 Verifying installation..."
-	@python3 -c "import edpmt; print(f'✅ EDPMT {edpmt.__version__} installed successfully')" || echo "❌ Installation verification failed"
-	@echo "🎯 Testing CLI entry points..."
-	@which edpmt >/dev/null && echo "✅ CLI available at: $$(which edpmt)" || echo "⚠️  CLI not in PATH - try: export PATH=$$HOME/.local/bin:$$PATH"
+	@bash scripts/install.sh
 
 # Install with all optional dependencies
 install-all:
@@ -175,8 +148,7 @@ test: test-all
 
 # Start EDPMT server in development mode
 server-dev:
-	@echo "🚀 Starting EDPMT server in development mode..."
-	edpmt server --dev --port 8888
+	@bash scripts/server-dev.sh
 
 # Start EDPMT server with TLS
 server-tls:
@@ -185,8 +157,7 @@ server-tls:
 
 # Start GPIO frontend demo
 frontend-demo:
-	@echo "🎨 Starting GPIO frontend demo..."
-	@python examples/gpio-frontend/app.py
+	@bash scripts/frontend-demo.sh
 
 # ==============================================================================
 # VALIDATION & HEALTH CHECKS
