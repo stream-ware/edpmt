@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import sys
+import random
 from pathlib import Path
 from typing import Optional
 
@@ -88,7 +89,13 @@ Examples:
         '--port', '-p',
         type=int,
         default=8888,
-        help='Port to listen on (default: 8888)'
+        help='Server port (default: 8888)'
+    )
+    
+    server_parser.add_argument(
+        '--hardware-simulators',
+        action='store_true',
+        help='Use hardware simulators instead of real hardware'
     )
     
     server_parser.add_argument(
@@ -239,72 +246,55 @@ Examples:
 
 
 async def server_main(args):
-    """Main function for server mode"""
-    # Setup development mode
-    if args.dev:
-        os.environ['EDPM_DEV'] = '1'
-        args.tls = True
-        if not args.debug and not args.verbose:
-            args.debug = True
+    """Main function for server command"""
+    print_header()
     
-    # Determine TLS setting
-    tls_enabled = None
-    if args.tls:
-        tls_enabled = True
-    elif args.no_tls:
-        tls_enabled = False
-    
-    # Create server instance
-    transport = TransportType(args.transport)
     server = EDPMTransparent(
-        name=args.name,
-        transport=transport,
-        tls=tls_enabled
+        name=args.name if args.name else f"edpm_{random.randint(100000, 999999)}",
+        host=args.host,
+        port=args.port,
+        tls=not args.no_tls,
+        dev_mode=args.dev,
+        hardware_simulators=args.hardware_simulators,
+        transport_type=TransportType[args.transport.upper()]
     )
     
-    # Update configuration
-    server.config.update({
-        'host': args.host,
-        'port': args.port
-    })
-    
     print(f"""
-╔══════════════════════════════════════════════════════════════╗
-║                    EDPM Transparent Server                  ║
-║                                                              ║
-║  🔧 Simple • 🔒 Secure • 🌐 Universal                      ║
-╚══════════════════════════════════════════════════════════════╝
-
 🚀 Server Configuration:
    • Name: {server.name}
-   • Transport: {server.transport.value}
+   • Transport: {server.transport_type.value}
    • Host: {args.host}
    • Port: {args.port}
    • TLS: {'✅ Enabled' if server.tls_enabled else '❌ Disabled'}
    • Development: {'✅ Yes' if args.dev else '❌ No'}
+   • Hardware Simulators: {'✅ Yes' if args.hardware_simulators else '❌ No'}
 
 🌐 Access Points:
    • Web Interface: {'https' if server.tls_enabled else 'http'}://{args.host}:{args.port}
    • REST API: {'https' if server.tls_enabled else 'http'}://{args.host}:{args.port}/api/execute
    • WebSocket: {'wss' if server.tls_enabled else 'ws'}://{args.host}:{args.port}/ws
    • Health Check: {'https' if server.tls_enabled else 'http'}://{args.host}:{args.port}/health
-
-Starting server... Press Ctrl+C to stop.
-""")
+"""
+    )
+    
+    print("Starting server... Press Ctrl+C to stop.")
     
     try:
         await server.start_server()
-        
-        # Keep server running
+        # Keep the server running
         await asyncio.Event().wait()
-        
+    except asyncio.CancelledError:
+        print("Server shutdown requested")
+        await server.shutdown()
+        return 0
     except KeyboardInterrupt:
-        print("\n🛑 Shutting down server...")
+        print("Server stopped by user")
+        await server.shutdown()
+        return 0
     except Exception as e:
         print(f"❌ Server error: {e}")
+        await server.shutdown()
         return 1
-    
-    return 0
 
 
 async def client_main(args):
@@ -604,6 +594,16 @@ Audio Generation:
 
 Quick Tests:
   set gpio {"pin": 17, "value": 1}; get gpio {"pin": 17}
+""")
+
+
+def print_header():
+    print("""
+╔══════════════════════════════════════════════════════════════╗
+║                    EDPM Transparent Server                  ║
+║                                                              ║
+║  🔧 Simple • 🔒 Secure • 🌐 Universal                      ║
+╚══════════════════════════════════════════════════════════════╝
 """)
 
 

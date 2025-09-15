@@ -147,13 +147,17 @@ test: test-all
 # ==============================================================================
 
 # Start EDPMT server in development mode
-server-dev:
-	@bash scripts/server-dev.sh
+server-dev: ## Start development server (requires installation)
+	@echo "Starting EDPMT server in development mode..."
+	@./bin/edpmt server --dev
 
-# Start EDPMT server with TLS
-server-tls:
-	@echo "🔐 Starting EDPMT server with TLS..."
-	edpmt server --tls --port 8888
+server-dev-sim: ## Start development server with hardware simulators
+	@echo "Starting EDPMT server in development mode with simulators..."
+	@./bin/edpmt server --dev --hardware-simulators
+
+server-tls: ## Start production TLS server (requires installation)
+	@echo "Starting EDPMT server with TLS..."
+	@./bin/edpmt server
 
 # Start GPIO frontend demo
 frontend-demo:
@@ -274,6 +278,7 @@ help:
 	@echo ""
 	@echo "Server Operations:"
 	@echo "  make server-dev     - Start server in dev mode"
+	@echo "  make server-dev-sim - Start server in dev mode with hardware simulators"
 	@echo "  make server-tls     - Start server with TLS"
 	@echo "  make frontend-demo  - Start GPIO frontend demo"
 	@echo ""
@@ -332,4 +337,4 @@ logs: ## View logs from all services
 
 restart: stop start ## Restart all EDPMT services
 
-.PHONY: all setup-dev install install-all build start stop test-e2e-bash test-e2e-python test-gpio test-i2c test-spi test-uart test-examples test-all server-dev server-tls frontend-demo validate troubleshoot health-check test-frontend docs-examples clean clean-python logs logs-server monitor-frontend publish help
+.PHONY: all setup-dev install install-all build start stop test-e2e-bash test-e2e-python test-gpio test-i2c test-spi test-uart test-examples test-all server-dev server-dev-sim server-tls frontend-demo validate troubleshoot health-check test-frontend docs-examples clean clean-python logs logs-server monitor-frontend publish help

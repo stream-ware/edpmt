@@ -13,3 +13,6 @@ flask-socketio>=5.3.0
 # smbus2>=0.4.1; sys_platform == "linux" 
 # spidev>=3.5; sys_platform == "linux"
 # pyserial>=3.5
+
+# Dynamic port allocation
+portkeeper>=0.1.0
