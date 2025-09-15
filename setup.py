@@ -26,7 +26,7 @@ if requirements_file.exists():
 
 setup(
     name="edpmt",
-    version="1.0.5",
+    version="1.0.6",
     author="Tom Sapletta",
     author_email="info@softreck.dev",
     description="EDPM Transparent - Simple, Secure, Universal Hardware Communication",
