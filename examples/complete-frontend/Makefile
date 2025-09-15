@@ -43,38 +43,15 @@ WEBSOCKET_PORT ?= 8085
 
 # Check if dependencies are installed
 check-deps:
-	@echo "🔍 Checking dependencies..."
-	@[ -f requirements.txt ] || (echo "❌ requirements.txt not found. Cannot check dependencies." && exit 1)
-	@$(PYTHON) -c "import pkg_resources; [pkg_resources.require(r) for r in open('requirements.txt', 'r').read().splitlines() if r and not r.startswith('#')]" 2>/dev/null || \
-		(echo "❌ Missing Python dependencies. Run 'make install' first." && exit 1)
-	@$(PYTHON) -c "import sys; sys.path.insert(0, '../..'); import edpmt" 2>/dev/null || \
-		(echo "❌ EDPMT not found. Please install EDPMT first." && exit 1)
-	@command -v curl >/dev/null 2>&1 || (echo "❌ 'curl' is required for health checks" && exit 1)
-	@echo "✅ All dependencies are available"
+	@PYTHON=$(PYTHON) bash scripts/check_deps.sh
 
 # Install dependencies using requirements.txt
 install:
-	@echo "📦 Installing dependencies from requirements.txt..."
-	@$(PIP) install --user --break-system-packages -r requirements.txt
-	@echo "🏗️  Checking EDPMT..."
-	@$(PYTHON) -c "import sys; sys.path.insert(0, '../..'); import edpmt; print('✅ EDPMT available')" || \
-		(echo "Installing EDPMT in editable mode..." && cd ../.. && $(PIP) install --user -e .)
-	@echo "✅ Installation check completed successfully"
+	@PYTHON=$(PYTHON) PIP=$(PIP) bash scripts/install.sh
 
 # Setup directories and example projects
 setup:
-	@echo "🏗️  Setting up directories and example projects..."
-	@mkdir -p $(LOG_DIR)
-	@mkdir -p $(PROJECTS_DIR)
-	@echo "📁 Created directories: $(LOG_DIR), $(PROJECTS_DIR)"
-	@$(PYTHON) -c "import json; \
-		projects = [ \
-			{'name': 'LED Blink', 'description': 'Simple LED blinking pattern', 'blocks': [{'type': 'start', 'position': {'x': 50, 'y': 50}, 'params': {}}, {'type': 'loop', 'position': {'x': 200, 'y': 50}, 'params': {'count': 10}}, {'type': 'gpio-output', 'position': {'x': 350, 'y': 50}, 'params': {'pin': 18, 'value': '1'}}, {'type': 'delay', 'position': {'x': 500, 'y': 50}, 'params': {'duration': 500}}, {'type': 'gpio-output', 'position': {'x': 650, 'y': 50}, 'params': {'pin': 18, 'value': '0'}}, {'type': 'delay', 'position': {'x': 800, 'y': 50}, 'params': {'duration': 500}}], 'version': '1.0'}, \
-			{'name': 'Button Monitor', 'description': 'Monitor button presses and control LED', 'blocks': [{'type': 'start', 'position': {'x': 50, 'y': 50}, 'params': {}}, {'type': 'gpio-input', 'position': {'x': 200, 'y': 50}, 'params': {'pin': 2, 'mode': 'pull-up'}}, {'type': 'condition', 'position': {'x': 350, 'y': 50}, 'params': {'operator': '==', 'value': '0'}}, {'type': 'gpio-output', 'position': {'x': 500, 'y': 30}, 'params': {'pin': 18, 'value': '1'}}, {'type': 'gpio-output', 'position': {'x': 500, 'y': 90}, 'params': {'pin': 18, 'value': '0'}}], 'version': '1.0'}, \
-			{'name': 'Traffic Light', 'description': 'Three-LED traffic light sequence', 'blocks': [{'type': 'start', 'position': {'x': 50, 'y': 50}, 'params': {}}, {'type': 'loop', 'position': {'x': 200, 'y': 50}, 'params': {'infinite': True}}, {'type': 'gpio-output', 'position': {'x': 350, 'y': 30}, 'params': {'pin': 18, 'value': '1'}}, {'type': 'delay', 'position': {'x': 500, 'y': 30}, 'params': {'duration': 3000}}, {'type': 'gpio-output', 'position': {'x': 650, 'y': 30}, 'params': {'pin': 18, 'value': '0'}}, {'type': 'gpio-output', 'position': {'x': 350, 'y': 70}, 'params': {'pin': 19, 'value': '1'}}, {'type': 'delay', 'position': {'x': 500, 'y': 70}, 'params': {'duration': 1000}}, {'type': 'gpio-output', 'position': {'x': 650, 'y': 70}, 'params': {'pin': 19, 'value': '0'}}, {'type': 'gpio-output', 'position': {'x': 350, 'y': 110}, 'params': {'pin': 20, 'value': '1'}}, {'type': 'delay', 'position': {'x': 500, 'y': 110}, 'params': {'duration': 3000}}, {'type': 'gpio-output', 'position': {'x': 650, 'y': 110}, 'params': {'pin': 20, 'value': '0'}}], 'version': '1.0'} \
-		]; \
-		[open(f'$(PROJECTS_DIR)/{p[\"name\"].replace(\" \", \"_\").lower()}.json', 'w').write(json.dumps(p, indent=2)) for p in projects]"
-	@echo "✅ Setup completed - example projects created"
+	@PYTHON=$(PYTHON) PROJECTS_DIR=$(PROJECTS_DIR) LOG_DIR=$(LOG_DIR) bash scripts/setup.sh
 
 # Run in development mode (unified server serves static + WebSocket under /ws)
 dev: stop check-deps test setup check-ports
@@ -103,13 +80,7 @@ clean:
 
 # Run with custom ports
 run-custom:
-	@read -p "HTTP port [8086]: " http_port; \
-	read -p "WebSocket port [8086]: " ws_port; \
-	$(PYTHON) $(SERVER_SCRIPT) \
-		--http-port $${http_port:-8086} \
-		--ws-port $${ws_port:-8086} \
-		--hardware-simulators \
-		--verbose
+	@PYTHON=$(PYTHON) SERVER_SCRIPT=$(SERVER_SCRIPT) bash scripts/run_custom.sh
 
 # Monitor logs in real-time
 logs:
@@ -118,38 +89,25 @@ logs:
 
 # Show server status
 status:
-	@echo "🔍 EDPMT Complete Frontend Status:"
-	@echo "=================================="
-	@pgrep -f "$(SERVER_SCRIPT)" >/dev/null && echo "🟢 Server: Running" || echo "🔴 Server: Stopped"
-	@curl -s http://localhost:$(HTTP_PORT)/api/status >/dev/null 2>&1 && echo "🟢 HTTP API: Responsive" || echo "🔴 HTTP API: Not responding"
-	@test -f $(LOG_DIR)/server*.log && echo "📄 Logs: Available in $(LOG_DIR)/" || echo "📄 Logs: None found"
-	@test -d $(PROJECTS_DIR) && echo "📁 Projects: $(shell ls $(PROJECTS_DIR)/*.json 2>/dev/null | wc -l) projects available" || echo "📁 Projects: Directory not found"
+	@HTTP_PORT=$(HTTP_PORT) LOG_DIR=$(LOG_DIR) PROJECTS_DIR=$(PROJECTS_DIR) SERVER_SCRIPT=$(SERVER_SCRIPT) bash scripts/status.sh
 
-# Create project backup
-backup:
-	@echo "💾 Creating project backup..."
-	@backup_name="projects_backup_$(shell date +%Y%m%d_%H%M%S).tar.gz"; \
-	tar -czf "$$backup_name" $(PROJECTS_DIR)/ $(LOG_DIR)/ 2>/dev/null && \
-	echo "✅ Backup created: $$backup_name" || \
-	echo "❌ Backup failed"
+# Show all available targets
+targets:
+	@echo "Available Makefile targets:"
+	@echo "=========================="
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) 2>/dev/null || \
+	grep -E '^[a-zA-Z_-]+:' $(MAKEFILE_LIST) | grep -v '^#' | sed 's/:.*//g' | sort
 
-# Show quick reference
-quick-ref:
-	@echo "EDPMT Complete Frontend - Quick Reference"
-	@echo "========================================"
-	@echo ""
-	@echo "🚀 Start Development:  make dev"
-	@echo "🚀 Start Production:   make run"
-	@echo "🛑 Stop Servers:       make stop"
-	@echo "🧪 Run Tests:          make test"
-	@echo "🧹 Clean Files:        make clean"
-	@echo ""
-	@echo "📄 Frontend URL:       http://localhost:$(HTTP_PORT)"
-	@echo "🔌 WebSocket URL:      ws://localhost:$(HTTP_PORT)/ws"
-	@echo "📁 Projects Dir:       $(PROJECTS_DIR)/"
-	@echo "📄 Logs Dir:           $(LOG_DIR)/"
-	@echo ""
-	@echo "💡 For help: make help"
+# Test the complete solution (starts a temporary server and probes endpoints)
+test: check-deps
+	@PYTHON=$(PYTHON) SERVER_SCRIPT=$(SERVER_SCRIPT) LOG_DIR=$(LOG_DIR) bash scripts/test.sh
+
+# Continuous monitoring: check endpoints every 5s and tail logs
+monitor:
+	@HTTP_PORT=$(HTTP_PORT) LOG_DIR=$(LOG_DIR) bash scripts/monitor.sh
+
+# Start dev then monitor continuously
+dev-watch: dev monitor
 
 # Docker support (bonus)
 docker-build:
@@ -170,20 +128,28 @@ docker-stop:
 	@docker stop edpmt-frontend 2>/dev/null && docker rm edpmt-frontend 2>/dev/null || true
 	@echo "✅ Docker container stopped"
 
-# Show all available targets
-targets:
-	@echo "Available Makefile targets:"
-	@echo "=========================="
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) 2>/dev/null || \
-	grep -E '^[a-zA-Z_-]+:' $(MAKEFILE_LIST) | grep -v '^#' | sed 's/:.*//g' | sort
+# Show quick reference
+quick-ref:
+	@echo "EDPMT Complete Frontend - Quick Reference"
+	@echo "========================================"
+	@echo ""
+	@echo "🚀 Start Development:  make dev"
+	@echo "🚀 Start Production:   make run"
+	@echo "🛑 Stop Servers:       make stop"
+	@echo "🧪 Run Tests:          make test"
+	@echo "🧹 Clean Files:        make clean"
+	@echo ""
+	@echo "📄 Frontend URL:       http://localhost:$(HTTP_PORT)"
+	@echo "🔌 WebSocket URL:      ws://localhost:$(HTTP_PORT)/ws"
+	@echo "📁 Projects Dir:       $(PROJECTS_DIR)/"
+	@echo "📄 Logs Dir:           $(LOG_DIR)/"
+	@echo ""
+	@echo "💡 For help: make help"
 
-# Test the complete solution (starts a temporary server and probes endpoints)
-test: check-deps
-	@PYTHON=$(PYTHON) SERVER_SCRIPT=$(SERVER_SCRIPT) LOG_DIR=$(LOG_DIR) bash scripts/test.sh
-
-# Continuous monitoring: check endpoints every 5s and tail logs
-monitor:
-	@HTTP_PORT=$(HTTP_PORT) LOG_DIR=$(LOG_DIR) bash scripts/monitor.sh
-
-# Start dev then monitor continuously
-dev-watch: dev monitor
+# Create project backup
+backup:
+	@echo "💾 Creating project backup..."
+	@backup_name="projects_backup_$(shell date +%Y%m%d_%H%M%S).tar.gz"; \
+	tar -czf "$$backup_name" $(PROJECTS_DIR)/ $(LOG_DIR)/ 2>/dev/null && \
+	echo "✅ Backup created: $$backup_name" || \
+	echo "❌ Backup failed"

@@ -77,7 +77,11 @@ class EDPMTEndToEndTests:
             self.server_task = asyncio.create_task(self.server.start_server())
             self.logger.info("⏳ Server task created, waiting for server to be ready...")
             
-            # Wait for server to be ready
+            # Add a longer delay to ensure server has time to initialize
+            self.logger.info("⏲️ Adding a delay of 10 seconds before waiting for server...")
+            await asyncio.sleep(10)
+            
+            # Wait for server to be ready (connection check)
             await self.wait_for_server()
             
             self.logger.info("✅ Test server started successfully")
