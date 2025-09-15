@@ -153,7 +153,8 @@ server-dev: ## Start development server (requires installation)
 
 server-dev-sim: ## Start development server with hardware simulators
 	@echo "Starting EDPMT server in development mode with simulators..."
-	@./bin/edpmt server --dev --hardware-simulators
+	./bin/edpmt server --dev --hardware-simulators
+	# timeout 30s ./bin/edpmt server --dev --hardware-simulators
 
 server-tls: ## Start production TLS server (requires installation)
 	@echo "Starting EDPMT server with TLS..."
