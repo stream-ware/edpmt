@@ -1,0 +1,144 @@
+{
+  "name": "Button Monitor",
+  "description": "Monitor button presses on GPIO pin 2 and control LED on pin 18",
+  "version": "1.0",
+  "blocks": [
+    {
+      "id": "start_1",
+      "type": "start",
+      "position": { "x": 50, "y": 100 },
+      "params": {
+        "auto_start": true
+      }
+    },
+    {
+      "id": "button_input",
+      "type": "gpio-input",
+      "position": { "x": 200, "y": 100 },
+      "params": {
+        "pin": 2,
+        "mode": "pull-up",
+        "trigger": "falling"
+      }
+    },
+    {
+      "id": "condition_1",
+      "type": "condition",
+      "position": { "x": 350, "y": 100 },
+      "params": {
+        "operator": "==",
+        "value": "0"
+      }
+    },
+    {
+      "id": "led_on",
+      "type": "gpio-output",
+      "position": { "x": 500, "y": 60 },
+      "params": {
+        "pin": 18,
+        "value": "1",
+        "duration": 0
+      }
+    },
+    {
+      "id": "led_off",
+      "type": "gpio-output",
+      "position": { "x": 500, "y": 140 },
+      "params": {
+        "pin": 18,
+        "value": "0",
+        "duration": 0
+      }
+    },
+    {
+      "id": "log_pressed",
+      "type": "log",
+      "position": { "x": 650, "y": 60 },
+      "params": {
+        "message": "Button pressed - LED ON",
+        "level": "info"
+      }
+    },
+    {
+      "id": "log_released",
+      "type": "log",
+      "position": { "x": 650, "y": 140 },
+      "params": {
+        "message": "Button released - LED OFF",
+        "level": "info"
+      }
+    },
+    {
+      "id": "delay_debounce",
+      "type": "delay",
+      "position": { "x": 800, "y": 100 },
+      "params": {
+        "duration": 50
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn_1",
+      "from": { "blockId": "start_1", "output": "trigger" },
+      "to": { "blockId": "button_input", "input": "trigger" }
+    },
+    {
+      "id": "conn_2",
+      "from": { "blockId": "button_input", "output": "change" },
+      "to": { "blockId": "condition_1", "input": "trigger" }
+    },
+    {
+      "id": "conn_3",
+      "from": { "blockId": "button_input", "output": "value" },
+      "to": { "blockId": "condition_1", "input": "value" }
+    },
+    {
+      "id": "conn_4",
+      "from": { "blockId": "condition_1", "output": "true" },
+      "to": { "blockId": "led_on", "input": "trigger" }
+    },
+    {
+      "id": "conn_5",
+      "from": { "blockId": "condition_1", "output": "false" },
+      "to": { "blockId": "led_off", "input": "trigger" }
+    },
+    {
+      "id": "conn_6",
+      "from": { "blockId": "led_on", "output": "complete" },
+      "to": { "blockId": "log_pressed", "input": "trigger" }
+    },
+    {
+      "id": "conn_7",
+      "from": { "blockId": "led_off", "output": "complete" },
+      "to": { "blockId": "log_released", "input": "trigger" }
+    },
+    {
+      "id": "conn_8",
+      "from": { "blockId": "log_pressed", "output": "complete" },
+      "to": { "blockId": "delay_debounce", "input": "trigger" }
+    },
+    {
+      "id": "conn_9",
+      "from": { "blockId": "log_released", "output": "complete" },
+      "to": { "blockId": "delay_debounce", "input": "trigger" }
+    }
+  ],
+  "hardware": [
+    {
+      "type": "gpio",
+      "pin": 2,
+      "mode": "input",
+      "pull": "up",
+      "description": "Button input with pull-up resistor"
+    },
+    {
+      "type": "gpio",
+      "pin": 18,
+      "mode": "output",
+      "description": "LED output indicator"
+    }
+  ],
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z"
+}

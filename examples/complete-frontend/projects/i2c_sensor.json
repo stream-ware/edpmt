@@ -1,0 +1,178 @@
+{
+  "name": "I2C Sensor Monitor",
+  "description": "Monitor temperature sensor via I2C and display readings with LED indicators",
+  "version": "1.0",
+  "blocks": [
+    {
+      "id": "start_1",
+      "type": "start",
+      "position": { "x": 50, "y": 150 },
+      "params": {
+        "auto_start": true
+      }
+    },
+    {
+      "id": "sensor_loop",
+      "type": "loop",
+      "position": { "x": 200, "y": 150 },
+      "params": {
+        "count": 0,
+        "infinite": true
+      }
+    },
+    {
+      "id": "i2c_read_temp",
+      "type": "i2c-read",
+      "position": { "x": 350, "y": 150 },
+      "params": {
+        "address": "0x48",
+        "register": "0x00",
+        "length": 2
+      }
+    },
+    {
+      "id": "temp_condition",
+      "type": "condition",
+      "position": { "x": 500, "y": 150 },
+      "params": {
+        "operator": ">",
+        "value": "25"
+      }
+    },
+    {
+      "id": "hot_led",
+      "type": "gpio-output",
+      "position": { "x": 650, "y": 100 },
+      "params": {
+        "pin": 18,
+        "value": "1",
+        "duration": 0
+      }
+    },
+    {
+      "id": "cool_led",
+      "type": "gpio-output",
+      "position": { "x": 650, "y": 200 },
+      "params": {
+        "pin": 19,
+        "value": "1",
+        "duration": 0
+      }
+    },
+    {
+      "id": "log_temp",
+      "type": "log",
+      "position": { "x": 800, "y": 150 },
+      "params": {
+        "message": "Temperature reading completed",
+        "level": "info"
+      }
+    },
+    {
+      "id": "read_delay",
+      "type": "delay",
+      "position": { "x": 950, "y": 150 },
+      "params": {
+        "duration": 2000
+      }
+    },
+    {
+      "id": "reset_leds",
+      "type": "gpio-output",
+      "position": { "x": 1100, "y": 125 },
+      "params": {
+        "pin": 18,
+        "value": "0",
+        "duration": 0
+      }
+    },
+    {
+      "id": "reset_leds_2",
+      "type": "gpio-output",
+      "position": { "x": 1100, "y": 175 },
+      "params": {
+        "pin": 19,
+        "value": "0",
+        "duration": 0
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn_1",
+      "from": { "blockId": "start_1", "output": "trigger" },
+      "to": { "blockId": "sensor_loop", "input": "trigger" }
+    },
+    {
+      "id": "conn_2",
+      "from": { "blockId": "sensor_loop", "output": "iteration" },
+      "to": { "blockId": "i2c_read_temp", "input": "trigger" }
+    },
+    {
+      "id": "conn_3",
+      "from": { "blockId": "i2c_read_temp", "output": "data" },
+      "to": { "blockId": "temp_condition", "input": "value" }
+    },
+    {
+      "id": "conn_4",
+      "from": { "blockId": "i2c_read_temp", "output": "data" },
+      "to": { "blockId": "temp_condition", "input": "trigger" }
+    },
+    {
+      "id": "conn_5",
+      "from": { "blockId": "temp_condition", "output": "true" },
+      "to": { "blockId": "hot_led", "input": "trigger" }
+    },
+    {
+      "id": "conn_6",
+      "from": { "blockId": "temp_condition", "output": "false" },
+      "to": { "blockId": "cool_led", "input": "trigger" }
+    },
+    {
+      "id": "conn_7",
+      "from": { "blockId": "hot_led", "output": "complete" },
+      "to": { "blockId": "log_temp", "input": "trigger" }
+    },
+    {
+      "id": "conn_8",
+      "from": { "blockId": "cool_led", "output": "complete" },
+      "to": { "blockId": "log_temp", "input": "trigger" }
+    },
+    {
+      "id": "conn_9",
+      "from": { "blockId": "log_temp", "output": "complete" },
+      "to": { "blockId": "read_delay", "input": "trigger" }
+    },
+    {
+      "id": "conn_10",
+      "from": { "blockId": "read_delay", "output": "complete" },
+      "to": { "blockId": "reset_leds", "input": "trigger" }
+    },
+    {
+      "id": "conn_11",
+      "from": { "blockId": "reset_leds", "output": "complete" },
+      "to": { "blockId": "reset_leds_2", "input": "trigger" }
+    }
+  ],
+  "hardware": [
+    {
+      "type": "i2c",
+      "address": "0x48",
+      "description": "Temperature sensor (e.g., LM75A)"
+    },
+    {
+      "type": "gpio",
+      "pin": 18,
+      "mode": "output",
+      "description": "Hot temperature indicator LED (red)"
+    },
+    {
+      "type": "gpio",
+      "pin": 19,
+      "mode": "output",
+      "description": "Cool temperature indicator LED (blue)"
+    }
+  ],
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z"
+}
