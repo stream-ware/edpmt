@@ -4,7 +4,7 @@
  */
 
 class EDPMTClient {
-    constructor(wsUrl = 'ws://localhost:8080', httpUrl = 'http://localhost:8080') {
+    constructor(wsUrl = 'ws://localhost:8085', httpUrl = 'http://localhost:8085') {
         this.wsUrl = wsUrl;
         this.httpUrl = httpUrl;
         this.ws = null;

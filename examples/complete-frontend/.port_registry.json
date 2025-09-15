@@ -1,0 +1,14 @@
+{
+  "127.0.0.1:38819": {
+    "host": "127.0.0.1",
+    "port": 38819,
+    "owner": "edpmt-frontend-http",
+    "timestamp": 1757951727.1970139
+  },
+  "127.0.0.1:41699": {
+    "host": "127.0.0.1",
+    "port": 41699,
+    "owner": "edpmt-frontend-websocket",
+    "timestamp": 1757951727.205438
+  }
+}

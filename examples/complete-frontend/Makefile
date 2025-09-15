@@ -11,8 +11,10 @@ help:
 	@echo "Available commands:"
 	@echo "  make install     - Install dependencies and setup environment"
 	@echo "  make run         - Run complete solution (production mode)"
-	@echo "  make dev         - Run in development mode with simulators"
-	@echo "  make dev-alt     - Run in development mode on alternative ports (8082/8083)"
+	@echo "  make dev         - Run in development mode with simulators (dynamic ports)"
+	@echo "  make allocate-ports - Allocate ports using portkeeper"
+	@echo "  make release-ports  - Release allocated ports"
+	@echo "  make port-status    - Show current port allocations"
 	@echo "  make setup       - Create example projects and setup directories"
 	@echo "  make test        - Test the frontend and backend integration"
 	@echo "  make check-deps  - Check if all dependencies are installed"
@@ -22,19 +24,24 @@ help:
 	@echo "Quick start:"
 	@echo "  1. make install"
 	@echo "  2. make dev"
-	@echo "  3. Open http://localhost:8080 in your browser"
+	@echo "  3. Open http://localhost:$(HTTP_PORT) in your browser (dynamic port)"
 	@echo ""
 
 # Variables
 PYTHON := python3
 PIP := pip3
-FRONTEND_PORT := 8080
-WEBSOCKET_PORT := 8081
-ALT_FRONTEND_PORT := 8082
-ALT_WEBSOCKET_PORT := 8083
+PORT_MANAGER := port_manager.py
 SERVER_SCRIPT := server.py
 LOG_DIR := logs
 PROJECTS_DIR := projects
+
+# Load environment variables from .env (for display purposes)
+-include .env
+export
+
+# Default ports (will be overridden by .env after allocation)
+HTTP_PORT ?= 8086
+WEBSOCKET_PORT ?= 8086
 
 # Check if dependencies are installed
 check-deps:
@@ -45,13 +52,15 @@ check-deps:
 		(echo "❌ EDPMT not found. Please install EDPMT first." && exit 1)
 	@echo "✅ All dependencies are available"
 
-# Install dependencies
+# Install dependencies (including portkeeper and python-dotenv)
 install:
 	@echo "📦 Installing dependencies..."
 	@echo "Checking current environment..."
 	@$(PYTHON) -c "import sys; print('Python:', sys.version)" 
 	@$(PYTHON) -c "import asyncio, websockets, json, pathlib; print('✅ Core dependencies available')" || \
-		(echo "Installing missing dependencies..." && $(PIP) install --user websockets asyncio-mqtt)
+		(echo "Installing missing dependencies..." && $(PIP) install --user --break-system-packages websockets asyncio-mqtt)
+	@$(PYTHON) -c "import portkeeper, dotenv; print('✅ Port management dependencies available')" || \
+		(echo "Installing port management dependencies..." && $(PIP) install --user --break-system-packages portkeeper python-dotenv)
 	@echo "🏗️  Checking EDPMT..."
 	@$(PYTHON) -c "import sys; sys.path.insert(0, '../..'); import edpmt; print('✅ EDPMT available')" || \
 		(echo "Installing EDPMT..." && cd ../.. && $(PIP) install --user -e .)
@@ -99,44 +108,49 @@ run: check-deps setup
 		--ws-port $(WEBSOCKET_PORT) \
 		--verbose 2>&1 | tee $(LOG_DIR)/server.log
 
-# Run in development mode (with hardware simulators)
+# Allocate ports using portkeeper
+allocate-ports:
+	@echo "🔍 Allocating ports with portkeeper..."
+	@$(PYTHON) $(PORT_MANAGER) allocate
+	@echo "✅ Ports allocated and saved to .env"
+
+# Release allocated ports
+release-ports:
+	@echo "🔄 Releasing allocated ports..."
+	@$(PYTHON) $(PORT_MANAGER) release
+	@echo "✅ All ports released"
+
+# Show current port allocations
+port-status:
+	@echo "📊 Current port allocations:"
+	@$(PYTHON) $(PORT_MANAGER) status
+
+# Run in development mode (with hardware simulators and dynamic ports)
+#dev: check-deps setup allocate-ports
 dev: check-deps setup
 	@echo "🚀 Starting EDPMT Complete Frontend (Development Mode)..."
-	@echo "📄 Frontend will be available at: http://localhost:$(FRONTEND_PORT)"
+	@echo "📄 Frontend will be available at: http://localhost:$(HTTP_PORT)"
 	@echo "🔌 WebSocket server will run on: ws://localhost:$(WEBSOCKET_PORT)"
 	@echo "🔧 Using hardware simulators - safe for development"
+	@echo "🎯 Using dynamic port allocation (portkeeper)"
 	@echo ""
 	@echo "Quick tips:"
 	@echo "  - Use Ctrl+C to stop the server"
 	@echo "  - All GPIO operations are simulated"
+	@echo "  - Ports are dynamically allocated to avoid conflicts"
 	@echo "  - Check the browser console for debug info"
 	@echo "  - Logs are saved to $(LOG_DIR)/server.log"
 	@echo ""
-	@$(PYTHON) $(SERVER_SCRIPT) \
-		--http-port $(FRONTEND_PORT) \
-		--ws-port $(WEBSOCKET_PORT) \
-		--hardware-simulators \
-		--verbose 2>&1 | tee $(LOG_DIR)/server-dev.log
+	@$(PYTHON) $(SERVER_SCRIPT) 2>&1 | tee $(LOG_DIR)/server-dev.log
 
-# Run in development mode with alternative ports (avoid conflicts)
-dev-alt: check-deps setup
-	@echo "🚀 Starting EDPMT Complete Frontend (Development Mode - Alternative Ports)..."
-	@echo "📄 Frontend will be available at: http://localhost:$(ALT_FRONTEND_PORT)"
-	@echo "🔌 WebSocket server will run on: ws://localhost:$(ALT_WEBSOCKET_PORT)"
-	@echo "🔧 Using hardware simulators - safe for development"
-	@echo "⚠️  Using alternative ports to avoid conflicts"
+# Run without port allocation (use existing ports from .env)
+dev-quick: check-deps setup
+	@echo "⚡ Starting EDPMT Complete Frontend (Quick Start - No Port Allocation)..."
+	@echo "📄 Frontend will be available at: http://localhost:$(HTTP_PORT)"
+	@echo "🔌 WebSocket server will run on: ws://localhost:$(WEBSOCKET_PORT)"
+	@echo "🔧 Using existing ports from .env file"
 	@echo ""
-	@echo "Quick tips:"
-	@echo "  - Use Ctrl+C to stop the server"
-	@echo "  - All GPIO operations are simulated"
-	@echo "  - Check the browser console for debug info"
-	@echo "  - Logs are saved to $(LOG_DIR)/server.log"
-	@echo ""
-	@$(PYTHON) $(SERVER_SCRIPT) \
-		--http-port $(ALT_FRONTEND_PORT) \
-		--ws-port $(ALT_WEBSOCKET_PORT) \
-		--hardware-simulators \
-		--verbose 2>&1 | tee $(LOG_DIR)/server-dev-alt.log
+	@$(PYTHON) $(SERVER_SCRIPT) 2>&1 | tee $(LOG_DIR)/server-dev-quick.log
 
 # Test the complete solution
 test: check-deps
@@ -179,11 +193,11 @@ clean:
 
 # Run with custom ports
 run-custom:
-	@read -p "HTTP port [8080]: " http_port; \
-	read -p "WebSocket port [8081]: " ws_port; \
+	@read -p "HTTP port [8086]: " http_port; \
+	read -p "WebSocket port [8086]: " ws_port; \
 	$(PYTHON) $(SERVER_SCRIPT) \
-		--http-port $${http_port:-8080} \
-		--ws-port $${ws_port:-8081} \
+		--http-port $${http_port:-8086} \
+		--ws-port $${ws_port:-8086} \
 		--hardware-simulators \
 		--verbose
 

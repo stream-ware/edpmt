@@ -17,6 +17,13 @@ from socketserver import ThreadingMixIn
 from urllib.parse import parse_qs, urlparse
 import threading
 
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    load_dotenv()  # Load .env file
+except ImportError:
+    print("Warning: python-dotenv not available, using system environment only")
+
 # Add EDPMT to path
 edpmt_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(edpmt_root))
@@ -28,12 +35,56 @@ except ImportError as e:
     print("Please ensure EDPMT is properly installed")
     sys.exit(1)
 
-# Configure logging
+# Configuration from environment variables
+class Config:
+    """Configuration loaded from .env file and environment variables"""
+    
+    # Server Configuration
+    HTTP_PORT = int(os.getenv('HTTP_PORT', '8085'))
+    WEBSOCKET_PORT = int(os.getenv('WEBSOCKET_PORT', '8086'))
+    
+    # Development Configuration
+    DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
+    VERBOSE_LOGGING = os.getenv('VERBOSE_LOGGING', 'false').lower() == 'true'
+    USE_HARDWARE_SIMULATORS = os.getenv('USE_HARDWARE_SIMULATORS', 'true').lower() == 'true'
+    
+    # File Paths
+    LOG_DIR = os.getenv('LOG_DIR', 'logs')
+    PROJECTS_DIR = os.getenv('PROJECTS_DIR', 'projects')
+    STATIC_DIR = os.getenv('STATIC_DIR', '.')
+    
+    # Log Configuration
+    LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
+    
+    # EDPMT Backend Configuration
+    EDPMT_BACKEND_TIMEOUT = int(os.getenv('EDPMT_BACKEND_TIMEOUT', '30'))
+    
+    # Performance Configuration
+    MAX_CONNECTIONS = int(os.getenv('MAX_CONNECTIONS', '100'))
+    REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', '30'))
+    
+    @classmethod
+    def print_config(cls):
+        """Print current configuration for debugging"""
+        print("📋 Current Configuration:")
+        print(f"  HTTP Port: {cls.HTTP_PORT}")
+        print(f"  WebSocket Port: {cls.WEBSOCKET_PORT}")
+        print(f"  Debug: {cls.DEBUG}")
+        print(f"  Hardware Simulators: {cls.USE_HARDWARE_SIMULATORS}")
+        print(f"  Log Level: {cls.LOG_LEVEL}")
+        print(f"  Projects Dir: {cls.PROJECTS_DIR}")
+        print(f"  Static Dir: {cls.STATIC_DIR}")
+
+# Setup logging with configuration from .env
+log_level = getattr(logging, Config.LOG_LEVEL.upper(), logging.INFO)
 logging.basicConfig(
-    level=logging.INFO,
+    level=log_level,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
+if Config.DEBUG:
+    Config.print_config()
 
 class EDPMTFrontendHandler(SimpleHTTPRequestHandler):
     """HTTP handler for serving frontend files and API endpoints"""
@@ -417,7 +468,7 @@ class EDPMTWebSocketHandler:
 class EDPMTFrontendServer:
     """Main server class that combines HTTP and WebSocket servers"""
     
-    def __init__(self, http_port=8080, ws_port=8081, edpmt_config=None):
+    def __init__(self, http_port=8085, ws_port=8086, edpmt_config=None):
         self.http_port = http_port
         self.ws_port = ws_port
         self.edpmt_config = edpmt_config or {}
@@ -559,25 +610,37 @@ class EDPMTFrontendServer:
         return True
 
 def main():
-    """Main entry point"""
+    """Main entry point - uses configuration from .env file"""
     import argparse
     
+    # Still allow command-line overrides for specific use cases
     parser = argparse.ArgumentParser(description='EDPMT Complete Frontend Server')
-    parser.add_argument('--http-port', type=int, default=8080, help='HTTP server port')
-    parser.add_argument('--ws-port', type=int, default=8081, help='WebSocket server port')
-    parser.add_argument('--hardware-simulators', action='store_true', 
+    parser.add_argument('--http-port', type=int, default=Config.HTTP_PORT, 
+                        help=f'HTTP server port (default: {Config.HTTP_PORT})')
+    parser.add_argument('--ws-port', type=int, default=Config.WEBSOCKET_PORT, 
+                        help=f'WebSocket server port (default: {Config.WEBSOCKET_PORT})')
+    parser.add_argument('--hardware-simulators', action='store_true', default=Config.USE_HARDWARE_SIMULATORS,
                         help='Use hardware simulators (for development)')
-    parser.add_argument('--verbose', '-v', action='store_true', help='Verbose logging')
+    parser.add_argument('--verbose', '-v', action='store_true', default=Config.VERBOSE_LOGGING, 
+                        help='Verbose logging')
     
     args = parser.parse_args()
     
-    if args.verbose:
+    if args.verbose or Config.VERBOSE_LOGGING:
         logging.getLogger().setLevel(logging.DEBUG)
+        logger.info("🔍 Verbose logging enabled")
+    
+    # Print configuration for debugging
+    if Config.DEBUG:
+        logger.info("Starting with configuration from .env file")
     
     # EDPMT configuration
     edpmt_config = {
         'hardware_simulators': args.hardware_simulators
     }
+    
+    logger.info(f"🚀 Starting server with HTTP:{args.http_port}, WS:{args.ws_port}")
+    logger.info(f"🔧 Hardware simulators: {args.hardware_simulators}")
     
     # Create and run server
     server = EDPMTFrontendServer(

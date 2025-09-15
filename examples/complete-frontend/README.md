@@ -111,7 +111,7 @@ The frontend automatically connects to EDPMT backend:
 
 ```javascript
 // Automatic backend connection
-const edpmtClient = new EDPMTClient('ws://localhost:8080');
+const edpmtClient = new EDPMTClient('ws://localhost:8085');
 
 // Send commands to peripherals
 await edpmtClient.execute('gpio-set', { pin: 18, value: 1 });
@@ -184,7 +184,7 @@ Customize interface in `frontend-config.js`:
 
 ```javascript
 export const CONFIG = {
-  edpmtBackend: 'ws://localhost:8080',
+  edpmtBackend: 'ws://localhost:8085',
   updateInterval: 1000, // Status update frequency (ms)
   enableLiveEditing: true,
   defaultProjects: ['led-blink', 'sensor-monitor'],
@@ -220,15 +220,15 @@ ws.send(JSON.stringify({
 
 ```bash
 # Execute peripheral commands
-curl -X POST http://localhost:8080/api/execute \
+curl -X POST http://localhost:8085/api/execute \
   -H "Content-Type: application/json" \
   -d '{"action": "gpio-set", "params": {"pin": 18, "value": 1}}'
 
 # Get peripheral status
-curl http://localhost:8080/api/status
+curl http://localhost:8085/api/status
 
 # Save visual programming project
-curl -X POST http://localhost:8080/api/projects/save \
+curl -X POST http://localhost:8085/api/projects/save \
   -H "Content-Type: application/json" \
   -d '{"name": "my-project", "blocks": [...]}'
 ```
