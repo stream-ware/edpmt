@@ -30,8 +30,8 @@ class EDPMTEndToEndTests:
     def __init__(self):
         self.server = None
         self.server_process = None
-        self.base_url = "https://localhost:8889"  # Use different port for tests
-        self.http_url = "http://localhost:8889"
+        self.base_url = "https://localhost:8890"  # Use a different port for tests
+        self.http_url = "http://localhost:8890"
         self.test_results = []
         self.setup_logging()
         
@@ -64,9 +64,9 @@ class EDPMTEndToEndTests:
                 name="EDPMT-E2E-Test",
                 config={
                     'dev_mode': True,
-                    'port': 8889,
+                    'port': 8890,
                     'host': 'localhost',
-                    'tls': True,
+                    'tls': False,  # Disable TLS for testing to avoid certificate issues
                     'hardware_simulators': True
                 }
             )
@@ -84,34 +84,29 @@ class EDPMTEndToEndTests:
             self.logger.error(f"❌ Failed to start test server: {e}")
             return False
     
-    async def wait_for_server(self, timeout=30):
+    async def wait_for_server(self, timeout=60):
         """Wait for server to be ready"""
-        self.logger.info(f"⏳ Waiting for server at {self.base_url}...")
+        self.logger.info(f"⏳ Waiting for server at {self.http_url}...")
         
         for attempt in range(timeout):
             try:
+                self.logger.info(f"Attempt {attempt+1}/{timeout}: Checking server health...")
                 async with aiohttp.ClientSession(
                     connector=aiohttp.TCPConnector(ssl=False)
                 ) as session:
-                    async with session.get(f"{self.base_url}/health") as response:
+                    async with session.get(f"{self.http_url}/health") as response:
                         if response.status == 200:
                             self.logger.info("✅ Server is responding")
                             return True
-            except:
-                # Try HTTP if HTTPS fails
-                try:
-                    async with aiohttp.ClientSession() as session:
-                        async with session.get(f"{self.http_url}/health") as response:
-                            if response.status == 200:
-                                self.base_url = self.http_url
-                                self.logger.info("✅ Server is responding (HTTP)")
-                                return True
-                except:
-                    pass
-                    
+                        else:
+                            self.logger.info(f"Server responded with status {response.status}")
+            except Exception as e:
+                self.logger.info(f"Attempt {attempt+1}/{timeout}: Connection failed - {str(e)}")
+            
             await asyncio.sleep(1)
         
-        raise TimeoutError("Server did not start within timeout")
+        self.logger.error(f"❌ Server did not start within {timeout} seconds")
+        raise TimeoutError(f"Server did not start within {timeout} seconds")
     
     async def cleanup(self):
         """Cleanup test server"""

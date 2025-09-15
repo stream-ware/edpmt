@@ -29,19 +29,68 @@ find_available_port() {
     echo $current_port
 }
 
+# Detect PortKeeper CLI
+if command -v portkeeper >/dev/null 2>&1; then
+    USE_PORTKEEPER=1
+    echo "🔑 PortKeeper detected — using coordinated reservations"
+else
+    USE_PORTKEEPER=0
+    echo "ℹ️ PortKeeper not found — falling back to local finder"
+fi
+
+# Reserve port helper (prefers PortKeeper)
+reserve_port() {
+    local preferred=$1
+    local range_start=$2
+    local range_end=$3
+    local env_key=$4
+    local host=${5:-127.0.0.1}
+
+    if [ "$USE_PORTKEEPER" -eq 1 ]; then
+        # Reserve and write to project .env atomically
+        portkeeper reserve \
+            --preferred "$preferred" \
+            --range "$range_start" "$range_end" \
+            --host "$host" \
+            --owner "edpmt" \
+            --write-env "$env_key" \
+            --env-path .env \
+            >/tmp/portkeeper-"$env_key".json || true
+        # Load env and echo the value
+        if [ -f .env ]; then
+            set -a; . ./.env; set +a
+            eval "echo \${$env_key}"
+            return
+        fi
+    fi
+    # Fallback using built-in finder
+    echo "$(find_available_port "$preferred")"
+}
+
 # Kill any existing processes
 echo "🧹 Cleaning up existing processes..."
 pkill -f "edpmt.*server" 2>/dev/null || true
 pkill -f "python.*http.server" 2>/dev/null || true
 sleep 2
 
-# Find available ports
-EDPMT_PORT=$(find_available_port 8888)
-VISUAL_PORT=$(find_available_port 8080)
+# Find available ports (prefer PortKeeper)
+EDPMT_HOST="127.0.0.1"
+VISUAL_HOST="127.0.0.1"
+EDPMT_PORT="$(reserve_port 8888 8888 8988 EDPMT_PORT "$EDPMT_HOST")"
+VISUAL_PORT="$(reserve_port 8080 8080 8180 VISUAL_PORT "$VISUAL_HOST")"
+
+# Persist/complete backend env
+if [ ! -f .env ]; then
+    touch .env
+fi
+grep -q '^EDPMT_PORT=' .env 2>/dev/null || echo "EDPMT_PORT=$EDPMT_PORT" >> .env
+grep -q '^EDPMT_HOST=' .env 2>/dev/null || echo "EDPMT_HOST=$EDPMT_HOST" >> .env
+grep -q '^VISUAL_PORT=' .env 2>/dev/null || echo "VISUAL_PORT=$VISUAL_PORT" >> .env
+grep -q '^VISUAL_HOST=' .env 2>/dev/null || echo "VISUAL_HOST=$VISUAL_HOST" >> .env
 
 echo "📡 Using ports:"
-echo "   • EDPMT Server: $EDPMT_PORT"
-echo "   • Visual Programming: $VISUAL_PORT"
+echo "   • EDPMT Server: $EDPMT_HOST:$EDPMT_PORT"
+echo "   • Visual Programming: $VISUAL_HOST:$VISUAL_PORT"
 
 # Create PID file directory
 mkdir -p /tmp/edpmt-pids
@@ -53,7 +102,7 @@ cd "$(dirname "$0")/.."
 # Set environment variable for port
 export EDPMT_PORT=$EDPMT_PORT
 
-nohup edpmt server --dev --port $EDPMT_PORT > /tmp/edpmt-server.log 2>&1 &
+nohup edpmt server --dev --host $EDPMT_HOST --port $EDPMT_PORT > /tmp/edpmt-server.log 2>&1 &
 EDPMT_PID=$!
 echo $EDPMT_PID > /tmp/edpmt-pids/server.pid
 
@@ -72,22 +121,25 @@ fi
 echo "🎨 Starting Visual Programming Interface on port $VISUAL_PORT..."
 cd examples/visual-programming
 
-# Update configuration for frontend
-cat > /tmp/edpmt-config.js << EOF
-// Dynamic configuration for EDPMT Visual Programming
-
-const CONFIG = {
-    serverUrl: 'https://localhost:$EDPMT_PORT',
-    defaultEdpmtPort: $EDPMT_PORT,
-    defaultVisualPort: $VISUAL_PORT
+# Inject runtime-config.js for the frontend (window.EDPMT_RUNTIME)
+cat > runtime-config.js << EOF
+// Runtime configuration injected by start-all.sh
+window.EDPMT_RUNTIME = {
+    httpUrl: 'https://localhost:$EDPMT_PORT',
+    wsUrl: 'wss://localhost:$EDPMT_PORT/ws'
 };
-
-export default CONFIG;
 EOF
 
-mv /tmp/edpmt-config.js config.js
+# Also write config.json for consumers/tools that expect JSON
+cat > config.json << EOF
+{
+  "httpUrl": "https://localhost:$EDPMT_PORT",
+  "wsUrl": "wss://localhost:$EDPMT_PORT/ws",
+  "visualUrl": "http://localhost:$VISUAL_PORT"
+}
+EOF
 
-echo "🔄 Updated frontend configuration with server port $EDPMT_PORT"
+echo "🔄 Updated frontend configuration (runtime-config.js and config.json)"
 
 nohup python3 -m http.server $VISUAL_PORT > /tmp/edpmt-visual.log 2>&1 &
 VISUAL_PID=$!
