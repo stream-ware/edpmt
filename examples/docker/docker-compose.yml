@@ -1,0 +1,155 @@
+version: '3.8'
+
+services:
+  # Main EDPMT server with hardware access
+  edpmt-server:
+    build:
+      context: ../..
+      dockerfile: examples/docker/Dockerfile
+    container_name: edpmt-transparent
+    ports:
+      - "8888:8888"   # HTTPS/WSS with TLS
+      - "8080:8080"   # HTTP fallback
+    environment:
+      - EDPM_PORT=8888
+      - EDPM_HOST=0.0.0.0
+      - EDPM_TLS=true
+      - EDPM_DEV=${DEV:-false}
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./certs:/root/.edpm/certs    # TLS certificates
+      - ./logs:/root/.edpm/logs      # Application logs
+      - ./config:/root/.edpm/config  # Configuration files
+      - /dev/shm:/dev/shm            # Shared memory for performance
+    devices:
+      # GPIO access (BCM2835)
+      - /dev/gpiomem:/dev/gpiomem
+      # I2C buses
+      - /dev/i2c-1:/dev/i2c-1
+      - /dev/i2c-0:/dev/i2c-0
+      # SPI devices
+      - /dev/spidev0.0:/dev/spidev0.0
+      - /dev/spidev0.1:/dev/spidev0.1
+      # UART/Serial ports
+      - /dev/ttyUSB0:/dev/ttyUSB0
+      - /dev/ttyAMA0:/dev/ttyAMA0
+      - /dev/serial0:/dev/serial0
+    privileged: true  # Required for hardware access
+    restart: unless-stopped
+    networks:
+      - edpmt-network
+    healthcheck:
+      test: ["CMD", "curl", "-k", "-f", "https://localhost:8888/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "edpmt.service=server"
+      - "edpmt.version=1.0.0"
+
+  # Optional: Nginx reverse proxy with Let's Encrypt
+  nginx-tls:
+    image: nginx:alpine
+    container_name: edpmt-nginx
+    ports:
+      - "80:80"       # HTTP redirect
+      - "443:443"     # HTTPS with real certificates
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl.conf:/etc/nginx/ssl.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - edpmt-server
+    networks:
+      - edpmt-network
+    restart: unless-stopped
+    profiles:
+      - production  # Only start with --profile production
+
+  # Development: MQTT broker for IoT integration
+  mqtt-broker:
+    image: eclipse-mosquitto:2
+    container_name: edpmt-mqtt
+    ports:
+      - "1883:1883"   # MQTT
+      - "9001:9001"   # MQTT over WebSocket
+    volumes:
+      - ./mqtt/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./mqtt/data:/mosquitto/data
+      - ./mqtt/log:/mosquitto/log
+    networks:
+      - edpmt-network
+    restart: unless-stopped
+    profiles:
+      - iot  # Only start with --profile iot
+
+  # Development: InfluxDB for data logging
+  influxdb:
+    image: influxdb:2.7-alpine
+    container_name: edpmt-influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=edpmt123
+      - DOCKER_INFLUXDB_INIT_ORG=edpmt
+      - DOCKER_INFLUXDB_INIT_BUCKET=hardware-data
+    volumes:
+      - influxdb-data:/var/lib/influxdb2
+    networks:
+      - edpmt-network
+    restart: unless-stopped
+    profiles:
+      - monitoring  # Only start with --profile monitoring
+
+  # Development: Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    container_name: edpmt-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=edpmt123
+      - GF_INSTALL_PLUGINS=grafana-influxdb-datasource
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - influxdb
+    networks:
+      - edpmt-network
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  # Example: GPIO LED controller application
+  led-controller:
+    build:
+      context: ../..
+      dockerfile: examples/rpi3-gpio/led-controller/Dockerfile
+    container_name: edpmt-led-controller
+    environment:
+      - EDPM_URL=https://edpmt-server:8888
+      - EDPM_DEV=true
+    depends_on:
+      - edpmt-server
+    networks:
+      - edpmt-network
+    restart: unless-stopped
+    profiles:
+      - examples
+
+networks:
+  edpmt-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  influxdb-data:
+  grafana-data:

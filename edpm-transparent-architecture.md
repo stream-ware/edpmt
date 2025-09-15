@@ -1191,4 +1191,5 @@ System automatycznie loguje wszystko:
 - ✅ **1 uniwersalne API** - łatwe do zapamiętania
 - ✅ **Production ready** z minimalnym wysiłkiem
 
-Czy to rozwiązanie jest wystarczająco proste i transparentne? Mogę jeszcze bardziej uprościć API lub dodać dodatkowe features jak auto-discovery przez mDNS/Zeroconf.
+Czy to rozwiązanie jest wystarczająco proste i transparentne? 
+Mogę jeszcze bardziej uprościć API lub dodać dodatkowe features jak auto-discovery przez mDNS/Zeroconf.
