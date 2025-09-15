@@ -87,17 +87,29 @@ done
 # Test endpoints
 endpoints=(
     "/"
+    "/index.html"
+    "/styles.css"
+    "/js/main.js"
+    "/runtime-config.js"
     "/api/status"
     "/api/projects"
-    "/runtime-config.js"
 )
 
 for endpoint in "${endpoints[@]}"; do
-    status_code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${TEST_PORT}${endpoint}" || true)
-    if [ "$status_code" = "200" ]; then
-        echo "   • ${endpoint} -> ✅ 200"
+    echo "   • Testing ${endpoint}..."
+    
+    # Use timeout to prevent hanging
+    timeout 10 curl -v -s -A "Mozilla/5.0" "http://localhost:${TEST_PORT}${endpoint}" > /tmp/curl_output.txt 2>&1
+    
+    # Get the status code
+    status_code=$(grep -oP '^< HTTP/1.1 \K\d+' /tmp/curl_output.txt | tail -1 || echo "000")
+    
+    if [[ "$status_code" =~ ^(200|304)$ ]]; then
+        echo "   • ${endpoint} -> ✅ ${status_code}"
     else
         echo "   • ${endpoint} -> ❌ ${status_code}"
+        echo "   • Response headers:"
+        grep -E '^< ' /tmp/curl_output.txt | head -10
         echo "   • Last 20 lines of server log:"
         tail -n 20 "$LOG_DIR/server-test.log" || true
         exit 1

@@ -252,31 +252,50 @@ window.runtimeConfig = {{
         except Exception as e:
             return web.json_response({'error': str(e)}, status=500)
 
-    # --- Server Setup and Run ---
-    async def run(self):
-        """Configures and runs the web server."""
-        await self.start_edpmt_client()
-
-        # Setup routes
-        self.app.router.add_get('/ws', self.websocket_handler)
-        self.app.router.add_get('/runtime-config.js', self.runtime_config_handler)
-        self.app.router.add_get('/api/projects', self.list_projects_handler)
-        self.app.router.add_get('/api/status', self.status_handler)
-        self.app.router.add_post('/api/execute', self.execute_handler)
-        self.app.router.add_post('/api/save-project', self.save_project_handler)
-        self.app.router.add_post('/api/load-project', self.load_project_handler)
-        self.app.router.add_static('/', path=Config.STATIC_DIR, name='static')
-
-        # Configure CORS
+    def setup_middleware(self):
+        """Configure middleware for the server."""
+        # Enable CORS for all routes
         cors = aiohttp_cors.setup(self.app, defaults={
             "*": aiohttp_cors.ResourceOptions(
                 allow_credentials=True,
                 expose_headers="*",
                 allow_headers="*",
+                allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
             )
         })
+
+        # Configure CORS on all routes
         for route in list(self.app.router.routes()):
             cors.add(route)
+
+    def setup_routes(self):
+        """Set up all routes for the web server."""
+        # Serve static files from the root
+        self.app.router.add_static(
+            '/',
+            path=str(Config.STATIC_DIR),
+            name='static',
+            show_index=True
+        )
+
+        # API routes
+        self.app.router.add_get('/api/status', self.status_handler)
+        self.app.router.add_get('/api/projects', self.list_projects_handler)
+        self.app.router.add_post('/api/execute', self.execute_handler)
+        self.app.router.add_post('/api/save-project', self.save_project_handler)
+        self.app.router.add_post('/api/load-project', self.load_project_handler)
+        self.app.router.add_get('/runtime-config.js', self.runtime_config_handler)
+        self.app.router.add_get('/ws', self.websocket_handler)
+
+        # No catch-all route needed when serving static files from root
+
+    async def run(self):
+        """Configure and run the web server."""
+        await self.start_edpmt_client()
+        
+        # Setup routes and middleware
+        self.setup_routes()
+        self.setup_middleware()
 
         # Create and run the server
         runner = web.AppRunner(self.app)
