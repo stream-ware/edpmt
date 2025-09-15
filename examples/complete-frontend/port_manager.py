@@ -145,14 +145,8 @@ def main():
         if port:
             print(port)
         else:
-            # Try to allocate if not found
-            print(f"ℹ️ No port allocated for profile: {args.profile}. Checking .env...", file=sys.stderr)
-            env_port = os.getenv(f"{args.profile.upper()}_PORT")
-            if env_port and env_port.isdigit():
-                print(env_port)
-            else:
-                print(f"❌ Cannot determine port for profile: {args.profile}", file=sys.stderr)
-                sys.exit(1)
+            print(f"Could not find port for profile {args.profile}", file=sys.stderr)
+            sys.exit(1)
     
     elif args.command == "release":
         manager.release_all()

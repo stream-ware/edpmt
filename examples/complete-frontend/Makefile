@@ -126,11 +126,8 @@ port-status:
 	@$(PYTHON) $(PORT_MANAGER) status
 
 # Run in development mode (with hardware simulators and dynamic ports)
-#dev: check-deps setup allocate-ports
-dev: check-deps setup
+dev: check-deps setup allocate-ports
 	@echo "🚀 Starting EDPMT Complete Frontend (Development Mode)..."
-	@echo "📄 Frontend will be available at: http://localhost:$(HTTP_PORT)"
-	@echo "🔌 WebSocket server will run on: ws://localhost:$(WEBSOCKET_PORT)"
 	@echo "🔧 Using hardware simulators - safe for development"
 	@echo "🎯 Using dynamic port allocation (portkeeper)"
 	@echo ""
@@ -141,6 +138,7 @@ dev: check-deps setup
 	@echo "  - Check the browser console for debug info"
 	@echo "  - Logs are saved to $(LOG_DIR)/server.log"
 	@echo ""
+	@# The server will now read the allocated ports directly from the .env file
 	@$(PYTHON) $(SERVER_SCRIPT) 2>&1 | tee $(LOG_DIR)/server-dev.log
 
 # Run without port allocation (use existing ports from .env)
