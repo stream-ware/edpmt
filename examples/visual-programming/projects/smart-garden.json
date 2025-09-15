@@ -1,0 +1,101 @@
+{
+  "name": "Smart Garden Monitor",
+  "description": "Automated plant watering system with soil moisture monitoring",
+  "author": "EDPMT Visual Programming",
+  "version": "1.0",
+  "hardware_requirements": [
+    "Soil moisture sensor (I2C)",
+    "Water pump relay (GPIO)",
+    "Status LED (GPIO)",
+    "Buzzer (Audio)"
+  ],
+  "connections": {
+    "moisture_sensor": "I2C address 0x48",
+    "water_pump": "GPIO pin 17",
+    "status_led": "GPIO pin 18",
+    "buzzer": "Audio output"
+  },
+  "blocks": [
+    {
+      "type": "repeat",
+      "inputs": {
+        "times": "999"
+      }
+    },
+    {
+      "type": "i2c-read",
+      "inputs": {
+        "device": "48",
+        "register": "00",
+        "length": "2"
+      }
+    },
+    {
+      "type": "delay",
+      "inputs": {
+        "seconds": "0.1"
+      }
+    },
+    {
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "18",
+        "value": "1"
+      }
+    },
+    {
+      "type": "if-condition",
+      "inputs": {
+        "condition": "moisture-low",
+        "threshold": "30"
+      }
+    },
+    {
+      "type": "audio-play",
+      "inputs": {
+        "frequency": "1000",
+        "duration": "0.5"
+      }
+    },
+    {
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "17",
+        "value": "1"
+      }
+    },
+    {
+      "type": "delay",
+      "inputs": {
+        "seconds": "5"
+      }
+    },
+    {
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "17",
+        "value": "0"
+      }
+    },
+    {
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "18",
+        "value": "0"
+      }
+    },
+    {
+      "type": "delay",
+      "inputs": {
+        "seconds": "60"
+      }
+    }
+  ],
+  "notes": [
+    "Monitor soil moisture every minute",
+    "If moisture below 30%, activate water pump for 5 seconds",
+    "Status LED indicates system is active",
+    "Audio alert when watering begins",
+    "Adjust moisture threshold based on plant needs"
+  ]
+}

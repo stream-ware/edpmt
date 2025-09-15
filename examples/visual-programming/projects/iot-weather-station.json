@@ -1,0 +1,178 @@
+{
+  "name": "IoT Weather Station",
+  "description": "Multi-sensor weather monitoring with data logging and alerts",
+  "author": "EDPMT Visual Programming",
+  "version": "1.0",
+  "hardware_requirements": [
+    "BME280 sensor (I2C) - Temperature, Humidity, Pressure",
+    "Light sensor (I2C)",
+    "Wind speed sensor (GPIO)",
+    "Rain detector (GPIO)",
+    "Status LEDs (GPIO)",
+    "Buzzer for alerts (Audio)"
+  ],
+  "connections": {
+    "bme280_sensor": "I2C address 0x76",
+    "light_sensor": "I2C address 0x23",
+    "wind_sensor": "GPIO pin 22",
+    "rain_sensor": "GPIO pin 23",
+    "temp_led": "GPIO pin 17",
+    "humidity_led": "GPIO pin 18",
+    "pressure_led": "GPIO pin 19",
+    "alert_buzzer": "Audio output"
+  },
+  "blocks": [
+    {
+      "type": "repeat",
+      "inputs": {
+        "times": "999"
+      }
+    },
+    {
+      "type": "i2c-scan",
+      "inputs": {}
+    },
+    {
+      "type": "i2c-read",
+      "inputs": {
+        "device": "76",
+        "register": "F7",
+        "length": "3"
+      }
+    },
+    {
+      "type": "i2c-read",
+      "inputs": {
+        "device": "76",
+        "register": "FA",
+        "length": "3"
+      }
+    },
+    {
+      "type": "i2c-read",
+      "inputs": {
+        "device": "76",
+        "register": "FD",
+        "length": "2"
+      }
+    },
+    {
+      "type": "i2c-read",
+      "inputs": {
+        "device": "23",
+        "register": "00",
+        "length": "2"
+      }
+    },
+    {
+      "type": "gpio-get",
+      "inputs": {
+        "pin": "22"
+      }
+    },
+    {
+      "type": "gpio-get",
+      "inputs": {
+        "pin": "23"
+      }
+    },
+    {
+      "type": "if-condition",
+      "inputs": {
+        "condition": "temperature-high",
+        "threshold": "35"
+      }
+    },
+    {
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "17",
+        "value": "1"
+      }
+    },
+    {
+      "type": "audio-play",
+      "inputs": {
+        "frequency": "1500",
+        "duration": "1.0"
+      }
+    },
+    {
+      "type": "if-condition",
+      "inputs": {
+        "condition": "humidity-high",
+        "threshold": "80"
+      }
+    },
+    {
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "18",
+        "value": "1"
+      }
+    },
+    {
+      "type": "if-condition",
+      "inputs": {
+        "condition": "gpio-high",
+        "pin": "23"
+      }
+    },
+    {
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "19",
+        "value": "1"
+      }
+    },
+    {
+      "type": "audio-beep",
+      "inputs": {
+        "pattern": "double"
+      }
+    },
+    {
+      "type": "delay",
+      "inputs": {
+        "seconds": "2"
+      }
+    },
+    {
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "17",
+        "value": "0"
+      }
+    },
+    {
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "18",
+        "value": "0"
+      }
+    },
+    {
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "19",
+        "value": "0"
+      }
+    },
+    {
+      "type": "delay",
+      "inputs": {
+        "seconds": "60"
+      }
+    }
+  ],
+  "notes": [
+    "Read all sensors every minute",
+    "Temperature alert if > 35°C",
+    "Humidity alert if > 80%",
+    "Rain detection triggers immediate alert",
+    "Wind speed monitoring via GPIO interrupt",
+    "LED indicators for different weather conditions",
+    "Audio alerts for extreme weather",
+    "Data logging can be added via network connection"
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "name": "Smart Security System",
+  "description": "Motion detection with multiple sensors and alarm response",
+  "author": "EDPMT Visual Programming",
+  "version": "1.0",
+  "hardware_requirements": [
+    "PIR motion sensor (GPIO)",
+    "Door/window sensor (GPIO)",
+    "Alarm siren (GPIO)",
+    "Security light (GPIO)",
+    "Status display (I2C)",
+    "Buzzer (Audio)"
+  ],
+  "connections": {
+    "motion_sensor": "GPIO pin 20",
+    "door_sensor": "GPIO pin 21",
+    "alarm_siren": "GPIO pin 17",
+    "security_light": "GPIO pin 18",
+    "status_display": "I2C address 0x3C",
+    "buzzer": "Audio output"
+  },
+  "blocks": [
+    {
+      "type": "repeat",
+      "inputs": {
+        "times": "999"
+      }
+    },
+    {
+      "type": "gpio-get",
+      "inputs": {
+        "pin": "20"
+      }
+    },
+    {
+      "type": "gpio-get",
+      "inputs": {
+        "pin": "21"
+      }
+    },
+    {
+      "type": "if-condition",
+      "inputs": {
+        "condition": "gpio-high",
+        "pin": "20"
+      }
+    },
+    {
+      "type": "audio-beep",
+      "inputs": {
+        "pattern": "sos"
+      }
+    },
+    {
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "17",
+        "value": "1"
+      }
+    },
+    {
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "18",
+        "value": "1"
+      }
+    },
+    {
+      "type": "repeat",
+      "inputs": {
+        "times": "10"
+      }
+    },
+    {
+      "type": "audio-play",
+      "inputs": {
+        "frequency": "2000",
+        "duration": "0.2"
+      }
+    },
+    {
+      "type": "delay",
+      "inputs": {
+        "seconds": "0.1"
+      }
+    },
+    {
+      "type": "audio-play",
+      "inputs": {
+        "frequency": "1000",
+        "duration": "0.2"
+      }
+    },
+    {
+      "type": "delay",
+      "inputs": {
+        "seconds": "0.1"
+      }
+    },
+    {
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "17",
+        "value": "0"
+      }
+    },
+    {
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "18",
+        "value": "0"
+      }
+    },
+    {
+      "type": "delay",
+      "inputs": {
+        "seconds": "0.5"
+      }
+    }
+  ],
+  "notes": [
+    "Continuously monitor motion and door sensors",
+    "Trigger alarm when motion detected",
+    "Activate security light and siren",
+    "Play alternating high/low frequency alarm",
+    "Reset after 10 alarm cycles",
+    "Add I2C display for status messages",
+    "Consider adding arming/disarming mechanism"
+  ]
+}

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EDPMT Visual Programming - Block Builder</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1><i class="fas fa-cubes"></i> EDPMT Visual Programming</h1>
+                <p>Build hardware commands with drag-and-drop blocks</p>
+            </div>
+            <div class="header-right">
+                <button id="runButton" class="btn btn-success">
+                    <i class="fas fa-play"></i> Run Program
+                </button>
+                <button id="clearButton" class="btn btn-warning">
+                    <i class="fas fa-trash"></i> Clear
+                </button>
+                <button id="saveButton" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Save
+                </button>
+                <button id="loadButton" class="btn btn-info">
+                    <i class="fas fa-folder-open"></i> Load
+                </button>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Block Palette -->
+            <div class="block-palette">
+                <h3><i class="fas fa-toolbox"></i> Block Palette</h3>
+                
+                <!-- GPIO Blocks -->
+                <div class="category">
+                    <h4><i class="fas fa-microchip"></i> GPIO</h4>
+                    <div class="blocks">
+                        <div class="block gpio-set" draggable="true" data-type="gpio-set">
+                            <div class="block-header">Set GPIO Pin</div>
+                            <div class="block-inputs">
+                                Pin: <input type="number" min="0" max="40" value="17">
+                                Value: <select><option value="0">LOW</option><option value="1">HIGH</option></select>
+                            </div>
+                        </div>
+                        
+                        <div class="block gpio-get" draggable="true" data-type="gpio-get">
+                            <div class="block-header">Read GPIO Pin</div>
+                            <div class="block-inputs">
+                                Pin: <input type="number" min="0" max="40" value="18">
+                            </div>
+                        </div>
+                        
+                        <div class="block gpio-pwm" draggable="true" data-type="gpio-pwm">
+                            <div class="block-header">PWM GPIO Pin</div>
+                            <div class="block-inputs">
+                                Pin: <input type="number" min="0" max="40" value="18">
+                                Frequency: <input type="number" min="1" max="40000" value="1000">
+                                Duty: <input type="number" min="0" max="100" value="50">%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- I2C Blocks -->
+                <div class="category">
+                    <h4><i class="fas fa-exchange-alt"></i> I2C</h4>
+                    <div class="blocks">
+                        <div class="block i2c-scan" draggable="true" data-type="i2c-scan">
+                            <div class="block-header">Scan I2C Bus</div>
+                        </div>
+                        
+                        <div class="block i2c-read" draggable="true" data-type="i2c-read">
+                            <div class="block-header">Read I2C Device</div>
+                            <div class="block-inputs">
+                                Device: 0x<input type="text" value="76" maxlength="2">
+                                Register: 0x<input type="text" value="D0" maxlength="2">
+                                Length: <input type="number" min="1" max="32" value="1">
+                            </div>
+                        </div>
+                        
+                        <div class="block i2c-write" draggable="true" data-type="i2c-write">
+                            <div class="block-header">Write I2C Device</div>
+                            <div class="block-inputs">
+                                Device: 0x<input type="text" value="76" maxlength="2">
+                                Register: 0x<input type="text" value="F4" maxlength="2">
+                                Data: <input type="text" value="27" placeholder="hex values">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Control Blocks -->
+                <div class="category">
+                    <h4><i class="fas fa-cogs"></i> Control</h4>
+                    <div class="blocks">
+                        <div class="block delay" draggable="true" data-type="delay">
+                            <div class="block-header">Wait</div>
+                            <div class="block-inputs">
+                                <input type="number" min="0.1" max="60" step="0.1" value="1"> seconds
+                            </div>
+                        </div>
+                        
+                        <div class="block repeat" draggable="true" data-type="repeat">
+                            <div class="block-header">Repeat</div>
+                            <div class="block-inputs">
+                                <input type="number" min="1" max="1000" value="10"> times
+                            </div>
+                            <div class="block-container"></div>
+                        </div>
+                        
+                        <div class="block if-condition" draggable="true" data-type="if-condition">
+                            <div class="block-header">If</div>
+                            <div class="block-inputs">
+                                <select>
+                                    <option value="gpio-high">GPIO pin is HIGH</option>
+                                    <option value="gpio-low">GPIO pin is LOW</option>
+                                    <option value="i2c-device">I2C device found</option>
+                                </select>
+                                Pin/Device: <input type="text" value="17">
+                            </div>
+                            <div class="block-container"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audio Blocks -->
+                <div class="category">
+                    <h4><i class="fas fa-volume-up"></i> Audio</h4>
+                    <div class="blocks">
+                        <div class="block audio-play" draggable="true" data-type="audio-play">
+                            <div class="block-header">Play Tone</div>
+                            <div class="block-inputs">
+                                Frequency: <input type="number" min="20" max="20000" value="440"> Hz
+                                Duration: <input type="number" min="0.1" max="10" step="0.1" value="1"> sec
+                            </div>
+                        </div>
+                        
+                        <div class="block audio-beep" draggable="true" data-type="audio-beep">
+                            <div class="block-header">Beep Pattern</div>
+                            <div class="block-inputs">
+                                Pattern: <select>
+                                    <option value="single">Single Beep</option>
+                                    <option value="double">Double Beep</option>
+                                    <option value="triple">Triple Beep</option>
+                                    <option value="sos">SOS Pattern</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Templates -->
+                <div class="category">
+                    <h4><i class="fas fa-clipboard-list"></i> Templates</h4>
+                    <div class="blocks">
+                        <button class="template-btn" data-template="led-blink">
+                            <i class="fas fa-lightbulb"></i> LED Blink
+                        </button>
+                        <button class="template-btn" data-template="sensor-monitor">
+                            <i class="fas fa-thermometer-half"></i> Sensor Monitor
+                        </button>
+                        <button class="template-btn" data-template="traffic-light">
+                            <i class="fas fa-traffic-light"></i> Traffic Light
+                        </button>
+                        <button class="template-btn" data-template="alarm-system">
+                            <i class="fas fa-shield-alt"></i> Alarm System
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Programming Canvas -->
+            <div class="programming-canvas">
+                <h3><i class="fas fa-code"></i> Programming Canvas</h3>
+                <div id="canvas" class="canvas">
+                    <div class="start-block">
+                        <i class="fas fa-play-circle"></i> Start Program
+                    </div>
+                </div>
+            </div>
+
+            <!-- Output Panel -->
+            <div class="output-panel">
+                <h3><i class="fas fa-terminal"></i> Output</h3>
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="console">Console</button>
+                    <button class="tab-btn" data-tab="variables">Variables</button>
+                    <button class="tab-btn" data-tab="code">Generated Code</button>
+                </div>
+                
+                <div id="console" class="tab-content active">
+                    <div class="console-output"></div>
+                    <div class="console-stats">
+                        <span id="connection-status" class="status disconnected">Disconnected</span>
+                        <span id="execution-time">Execution: 0ms</span>
+                    </div>
+                </div>
+                
+                <div id="variables" class="tab-content">
+                    <div class="variables-list"></div>
+                </div>
+                
+                <div id="code" class="tab-content">
+                    <pre class="generated-code"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connection Modal -->
+    <div id="connectionModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>EDPMT Server Connection</h2>
+            <div class="connection-form">
+                <label>Server URL:</label>
+                <input type="text" id="serverUrl" value="https://localhost:8888">
+                <button id="connectBtn" class="btn btn-primary">Connect</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js" type="module"></script>
+    <script src="visual-programming.js" type="module"></script>
+</body>
+</html>
