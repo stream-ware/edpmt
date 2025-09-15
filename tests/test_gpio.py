@@ -14,7 +14,11 @@ from pathlib import Path
 # Add EDPMT to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from edpmt import EDPMTransparent, EDPMClient
+try:
+    from edpmt import EDPMTransparent, EDPMClient
+except ImportError:
+    # Fallback to direct import from modules
+    from transparent import EDPMTransparent, EDPMClient
 
 class TestGPIO:
     """Test GPIO protocol functionality"""
