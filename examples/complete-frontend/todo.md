@@ -7,6 +7,9 @@ chodzi o mozliwosc edycji logiki, ktora odpowiada za widok, pozwol na edytownaie
 uzyj do rpzydzielania portu do aplikacji tej paczki: portkeeper
 dodatkowo stworz plik .env do wszystkich globalnych zmiennych i uzywaj tam tez portow, ktore beda przydzielane z portkeeper oraz uzyj tez paczki bezposrednio w makefile jak tutaj: python3 -m http.server $(portkeeper port --profile service)
 
+0 w zakadce projects pwoinny by projekty z folderu projects/
+
+
 
 ### ✅ **Dynamic Flow Generator Created:**
 

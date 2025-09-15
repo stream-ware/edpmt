@@ -14,7 +14,7 @@ class EDPMTApp {
         this.currentProject = null;
         this.executionState = 'stopped';
         this.config = {
-            backendUrl: 'ws://localhost:8085',
+            backendUrl: 'ws://localhost:8086',
             httpUrl: 'http://localhost:8085',
             updateInterval: 1000,
             enableLogging: true,

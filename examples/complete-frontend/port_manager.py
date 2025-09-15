@@ -77,9 +77,17 @@ class EDPMTPortManager:
         return allocated_ports
     
     def get_port(self, profile: str) -> Optional[int]:
-        """Get currently allocated port for a profile."""
-        if profile in self.reservations:
-            return self.reservations[profile].port
+        """Get currently allocated port for a profile from .env file."""
+        load_dotenv(self.env_file) # Ensure we have the latest values
+        env_var_map = {
+            "http": "HTTP_PORT",
+            "websocket": "WEBSOCKET_PORT"
+        }
+        env_var = env_var_map.get(profile)
+        if env_var:
+            port_str = os.getenv(env_var)
+            if port_str and port_str.isdigit():
+                return int(port_str)
         return None
     
     def release_all(self):
@@ -130,15 +138,21 @@ def main():
         
     elif args.command == "get":
         if not args.profile:
-            print("❌ --profile required for 'get' command")
+            print("❌ --profile required for 'get' command", file=sys.stderr)
             sys.exit(1)
-        
+
         port = manager.get_port(args.profile)
         if port:
             print(port)
         else:
-            print(f"❌ No port allocated for profile: {args.profile}")
-            sys.exit(1)
+            # Try to allocate if not found
+            print(f"ℹ️ No port allocated for profile: {args.profile}. Checking .env...", file=sys.stderr)
+            env_port = os.getenv(f"{args.profile.upper()}_PORT")
+            if env_port and env_port.isdigit():
+                print(env_port)
+            else:
+                print(f"❌ Cannot determine port for profile: {args.profile}", file=sys.stderr)
+                sys.exit(1)
     
     elif args.command == "release":
         manager.release_all()
