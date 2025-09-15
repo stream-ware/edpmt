@@ -30,8 +30,8 @@ class EDPMTEndToEndTests:
     def __init__(self):
         self.server = None
         self.server_process = None
-        self.base_url = "https://localhost:8891"  # Use a different port for tests
-        self.http_url = "http://localhost:8891"
+        self.base_url = "https://127.0.0.1:8888"  # Use a different port for tests
+        self.http_url = "http://127.0.0.1:8888"
         self.test_results = []
         self.setup_logging()
         

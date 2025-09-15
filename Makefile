@@ -130,15 +130,32 @@ start-test-server:
 	@echo $$! > test-results/test_server.pid
 	@echo "⏳ Waiting for test server to start..."
 	@sleep 5
-	@if ! curl -s http://localhost:8891/health > /dev/null; then \
-		echo "⚠️ Test server not responding, waiting a bit longer..."; \
-		sleep 5; \
-		if ! curl -s http://localhost:8891/health > /dev/null; then \
-			echo "❌ Test server failed to start, check test-results/test_server.log"; \
-			exit 1; \
+	@attempt=1; max_attempts=12; while [ $$attempt -le $$max_attempts ]; do \
+		echo "⏳ Attempt $$attempt/$$max_attempts: Checking if test server is responding..."; \
+		if wget -q -O /dev/null http://localhost:8888/health 2> wget_error.log; then \
+			echo "✅ Test server started"; \
+			exit 0; \
 		fi; \
-	fi
-	@echo "✅ Test server started"
+		echo "⚠️ Test server not responding, waiting 5 more seconds..."; \
+		echo "📋 Checking test server log for errors..."; \
+		tail -n 5 test-results/test_server.log || echo "Log file not accessible"; \
+		echo "📋 Wget error log:"; \
+		cat wget_error.log || echo "Wget error log not accessible"; \
+		echo "📋 Checking network status for port 8888..."; \
+		if command -v ss >/dev/null 2>&1; then \
+			echo "📋 ss output for port 8888:"; \
+			ss -tuln | grep 8888 || echo "No process listening on port 8888"; \
+		else \
+			echo "📋 netstat output for port 8888:"; \
+			netstat -tuln | grep 8888 || echo "No process listening on port 8888"; \
+		fi; \
+		sleep 5; \
+		attempt=$$((attempt+1)); \
+		done; \
+		echo "❌ Test server failed to start after $$max_attempts attempts, check test-results/test_server.log"; \
+		echo "📋 Last 10 lines of test server log:"; \
+		tail -n 10 test-results/test_server.log || echo "Log file not accessible"; \
+		exit 1
 
 # Stop test server after E2E tests
 stop-test-server:

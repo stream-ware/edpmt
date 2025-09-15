@@ -6,6 +6,7 @@ package-lock.json
 venv
 .env
 npm
+.pid
 node_modules
 Cargo.lock
 # Byte-compiled / optimized / DLL files

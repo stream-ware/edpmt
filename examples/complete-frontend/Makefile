@@ -64,7 +64,8 @@ check-ports:
 # Stop development server
 stop:
 	@echo "🛑 Stopping development server..."
-	@pkill -f "$(SERVER_SCRIPT)" || echo "Server was not running."
+	@pkill -f "$(SERVER_SCRIPT)" 2>/dev/null || true
+	@rm -f .server-test.pid 2>/dev/null || true
 	@echo "✅ Server stopped."
 
 # Clean temporary files

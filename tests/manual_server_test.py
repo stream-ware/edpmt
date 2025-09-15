@@ -25,13 +25,13 @@ async def main():
     
     try:
         # Create server with development configuration
-        logger.info("🔧 Creating EDPMTransparent instance with config: dev_mode=True, port=8891, host=localhost, tls=False, hardware_simulators=True")
+        logger.info("🔧 Creating EDPMTransparent instance with config: dev_mode=True, port=8888, host=127.0.0.1, tls=False, hardware_simulators=True")
         server = EDPMTransparent(
             name="EDPMT-Manual-Test",
             config={
                 'dev_mode': True,
-                'port': 8891,
-                'host': 'localhost',
+                'port': 8888,
+                'host': '127.0.0.1',
                 'tls': False,  # Disable TLS for testing to avoid certificate issues
                 'hardware_simulators': True
             }
@@ -41,7 +41,7 @@ async def main():
         # Start server
         await server.start_server()
         
-        logger.info("✅ Server started successfully on http://localhost:8891")
+        logger.info("✅ Server started successfully on http://127.0.0.1:8888")
         # Keep the server running
         while True:
             await asyncio.sleep(1)
