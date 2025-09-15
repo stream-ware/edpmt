@@ -99,10 +99,7 @@ mkdir -p /tmp/edpmt-pids
 echo "🌐 Starting EDPMT server on port $EDPMT_PORT..."
 cd "$(dirname "$0")/.."
 
-# Set environment variable for port
-export EDPMT_PORT=$EDPMT_PORT
-
-nohup edpmt server --dev --host $EDPMT_HOST --port $EDPMT_PORT > /tmp/edpmt-server.log 2>&1 &
+nohup edpmt server --dev --host "$EDPMT_HOST" --auto-port > /tmp/edpmt-server.log 2>&1 &
 EDPMT_PID=$!
 echo $EDPMT_PID > /tmp/edpmt-pids/server.pid
 

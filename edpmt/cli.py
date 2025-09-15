@@ -284,6 +284,36 @@ async def server_main(args):
     """Main function for server command"""
     print_header()
     
+    if getattr(args, 'auto_port', False):
+        reserved_port = None
+        try:
+            if PortRegistry is not None:
+                reg = PortRegistry()
+                # Defaults for EDPMT when not explicitly provided
+                preferred = getattr(args, 'preferred_port', None)
+                rng = tuple(args.port_range) if args.port_range else None
+                if preferred is None:
+                    preferred = 8888
+                if rng is None:
+                    rng = (8888, 8988)
+                res = reg.reserve(preferred=preferred, port_range=rng, host=args.host, hold=False, owner='edpmt')
+                reserved_port = res.port
+                # Write EDPMT_PORT to .env by default (unless overridden)
+                write_key = getattr(args, 'write_env_key', None) or 'EDPMT_PORT'
+                env_path = getattr(args, 'env_path', '.env') or '.env'
+                reg.write_env({write_key: str(res.port)}, path=env_path)
+            else:
+                raise ImportError('PortKeeper not installed')
+        except Exception as e:
+            print(f"⚠️ PortKeeper auto-port failed ({e}). Falling back to system-assigned port.")
+        if reserved_port is None:
+            import socket
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.bind((args.host, 0))
+            reserved_port = s.getsockname()[1]
+            s.close()
+        args.port = reserved_port
+    
     config = {
         'dev_mode': args.dev,
         'host': args.host,

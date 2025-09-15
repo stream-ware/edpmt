@@ -432,3 +432,135 @@ This project is licensed under the **Apache License 2.0** - see the [LICENSE](LI
 ---
 
 **Made with ❤️ for simple, secure, and transparent hardware communication**
+
+# EDPM Transparent (EDPMT)
+
+EDPM Transparent (EDPMT) is a simple, secure, and universal server framework designed for hardware interaction and control. It provides a hardware-agnostic architecture with pluggable interfaces, allowing seamless switching between real hardware and simulators.
+
+## Key Features
+
+- **Single Universal API**: Use `execute(action, target, params)` for all hardware interactions.
+- **Automatic TLS**: Secure communication with self-signed certificates.
+- **Multi-Transport Support**: Supports Local IPC, Network TLS, and Browser WSS.
+- **Hardware Abstraction**: Automatically falls back to simulators if real hardware is unavailable.
+- **Zero Configuration**: Auto-detection of hardware and environment settings.
+- **Comprehensive Web Interface**: Real-time control and monitoring.
+- **Docker Support**: Easy deployment with hardware access.
+- **Full Logging and Transparency**: Detailed logs for debugging and monitoring.
+
+## Installation
+
+To install EDPMT, follow these steps:
+
+```bash
+# Clone the repository
+git clone https://github.com/stream-ware/edpmt.git
+cd edpmt
+
+# Set up for development
+make dev-setup
+```
+
+For detailed installation instructions and troubleshooting, refer to the [Installation Guide](#installation-guide) section below.
+
+## Usage
+
+### Starting the Server
+
+```bash
+# Start the server in development mode with simulators
+make server-dev-sim
+
+# Or use the CLI directly
+./bin/edpmt server --dev --hardware-simulators
+```
+
+### Accessing the Server
+
+Once the server is running, you can access:
+- **Web Interface**: `https://<host>:<port>` (default: `https://0.0.0.0:8888`)
+- **REST API**: `https://<host>:<port>/api/execute`
+- **WebSocket**: `wss://<host>:<port>/ws`
+- **Health Check**: `https://<host>:<port>/health`
+
+## Hardware-Agnostic Framework
+
+EDPMT now features a hardware-agnostic framework with pluggable hardware interfaces. This allows dynamic setup of hardware during initialization, with fallback to simulators if real hardware is unavailable. Currently supported interfaces include:
+- **GPIO**: Real (Raspberry Pi) and Simulated implementations.
+- **I2C**: Real (SMBus) and Simulated implementations.
+- **SPI, UART, USB, I2S**: Dummy implementations (to be expanded with real and simulated versions).
+
+To run the server with simulated hardware:
+```bash
+make server-dev-sim
+```
+
+## Examples
+
+EDPMT comes with several examples to demonstrate its capabilities. You can find them in the `examples` directory:
+
+- **[Complete Projects](examples/complete-projects/)**: Full-fledged projects showcasing comprehensive use of EDPMT.
+- **[Docker Setup](examples/docker/)**: Docker configuration for running EDPMT on Raspberry Pi 3 with hardware access.
+  - [Dockerfile](examples/docker/Dockerfile)
+  - [docker-compose.yml](examples/docker/docker-compose.yml)
+  - [docker-entrypoint.sh](examples/docker/docker-entrypoint.sh)
+  - [README.md](examples/docker/README.md)
+- **[GPIO Frontend](examples/gpio-frontend/)**: A web frontend for GPIO control using EDPMT.
+  - [app.py](examples/gpio-frontend/app.py)
+  - [README.md](examples/gpio-frontend/README.md)
+  - [templates/](examples/gpio-frontend/templates/)
+- **[PC Simulation](examples/pc-simulation/)**: Examples for simulating hardware interactions on a PC.
+  - [gpio_led_matrix.py](examples/pc-simulation/gpio_led_matrix.py)
+  - [i2c_sensor_simulation.py](examples/pc-simulation/i2c_sensor_simulation.py)
+  - [README.md](examples/pc-simulation/README.md)
+  - [spi_device_simulation.py](examples/pc-simulation/spi_device_simulation.py)
+  - [uart_communication.py](examples/pc-simulation/uart_communication.py)
+- **[Raspberry Pi 3 GPIO LED Controller](examples/rpi3-gpio/led-controller/)**: A specific example for controlling LEDs on Raspberry Pi 3 using GPIO.
+  - [app.py](examples/rpi3-gpio/led-controller/app.py)
+
+## Installation Guide
+
+### Prerequisites
+
+- Python 3.6 or higher
+- Access to hardware (Raspberry Pi for real hardware interaction) or use simulators
+
+### Steps
+
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/stream-ware/edpmt.git
+   cd edpmt
+   ```
+2. **Development Setup**:
+   ```bash
+   make dev-setup
+   ```
+3. **Running the Server**:
+   - For development with simulators:
+     ```bash
+     make server-dev-sim
+     ```
+   - For development with real hardware:
+     ```bash
+     make server-dev
+     ```
+
+### Troubleshooting
+
+- **Server Fails to Start**: Ensure no other process is using the default port (8888). Use the `--port` option to specify a different port.
+- **Hardware Not Detected**: Verify hardware connections and permissions. Use `--hardware-simulators` flag to test with simulated hardware.
+- **TLS Errors**: If you encounter certificate issues, use `--no-tls` to disable TLS temporarily for debugging.
+
+## Contributing
+
+Contributions to EDPMT are welcome! Please follow these steps:
+1. Fork the repository.
+2. Create a new branch for your feature or bug fix.
+3. Make your changes and commit them with descriptive messages.
+4. Push your changes to your fork.
+5. Create a pull request with a detailed description of your changes.
+
+## License
+
+EDPMT is licensed under the Apache 2.0 License. See [LICENSE](LICENSE) for more information.
