@@ -189,6 +189,10 @@ class EDPMTransparent:
         else:
             result = await self._default_handler(message)
         
+        # Convert bytes to list for JSON serialization for all hardware operations
+        if isinstance(result, bytes):
+            result = list(result)
+        
         # Update stats
         self.stats['messages_sent'] += 1
         self.stats['messages_received'] += 1
