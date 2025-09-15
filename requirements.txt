@@ -1,0 +1,11 @@
+# Core dependencies for EDPMT
+aiohttp>=3.8.0
+aiohttp-cors>=0.7.0
+cryptography>=3.4.8
+websockets>=10.0
+
+# Optional hardware dependencies (install with pip install edpmt[rpi])
+# RPi.GPIO>=0.7.1; sys_platform == "linux"
+# smbus2>=0.4.1; sys_platform == "linux" 
+# spidev>=3.5; sys_platform == "linux"
+# pyserial>=3.5
