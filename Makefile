@@ -243,12 +243,19 @@ publish: ## Publish project to PyPI
 help:
 	@echo "EDPMT (Electronic Device Protocol Management Transparent)"
 	@echo "========================================================"
-	@echo "Development:"
-	@echo "  make setup-dev      - Setup development environment"
-	@echo "  make install        - Install EDPMT in dev mode"
-	@echo "  make install-all    - Install with all dependencies"
-	@echo "  make dev-setup      - PYTHONPATH-based setup (no installation)"
-	@echo "  make venv-setup     - Create and setup virtual environment"
+	@echo ""
+	@echo "🚀 Quick Start (Recommended):"
+	@echo "  make dev-setup      - Setup PYTHONPATH-based development (no pip install)"
+	@echo "  ./bin/edpmt server --dev --port 8877  - Start server after dev-setup"
+	@echo "  ./bin/edpmt info    - Show system information"
+	@echo "  ./bin/edpmt --help  - Show CLI help"
+	@echo ""
+	@echo "📦 Installation Methods:"
+	@echo "  make dev-setup      - PYTHONPATH setup (bypasses externally-managed-environment)"
+	@echo "  make venv-setup     - Create isolated virtual environment"
+	@echo "  make install        - Traditional pip installation (may fail on managed envs)"
+	@echo "  make setup-dev      - Setup development directories"
+	@echo "  make install-all    - Install with all optional dependencies"
 	@echo ""
 	@echo "Docker Operations:"
 	@echo "  make build          - Build Docker containers"
@@ -290,5 +297,39 @@ help:
 	@echo ""
 	@echo "Publishing:"
 	@echo "  make publish        - Publish to PyPI"
+
+# === ALL SERVICES MANAGEMENT ===
+.PHONY: start stop status logs restart
+
+start: ## Start all EDPMT services (server + visual programming interface)
+	@chmod +x scripts/start-all.sh
+	@scripts/start-all.sh
+
+stop: ## Stop all EDPMT services and free all ports
+	@chmod +x scripts/stop-all.sh
+	@scripts/stop-all.sh
+
+status: ## Check status of all EDPMT services
+	@chmod +x scripts/status-all.sh
+	@scripts/status-all.sh
+
+logs: ## View logs from all services
+	@echo "📋 EDPMT Server Logs:"
+	@echo "====================="
+	@if [ -f /tmp/edpmt-server.log ]; then \
+		tail -n 50 /tmp/edpmt-server.log; \
+	else \
+		echo "No server log found"; \
+	fi
+	@echo ""
+	@echo "📋 Visual Programming Logs:"
+	@echo "==========================="
+	@if [ -f /tmp/edpmt-visual.log ]; then \
+		tail -n 20 /tmp/edpmt-visual.log; \
+	else \
+		echo "No visual programming log found"; \
+	fi
+
+restart: stop start ## Restart all EDPMT services
 
 .PHONY: all setup-dev install install-all build start stop test-e2e-bash test-e2e-python test-gpio test-i2c test-spi test-uart test-examples test-all server-dev server-tls frontend-demo validate troubleshoot health-check test-frontend docs-examples clean clean-python logs logs-server monitor-frontend publish help

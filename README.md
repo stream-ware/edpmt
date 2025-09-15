@@ -37,26 +37,57 @@ EDPMT is a revolutionary hardware communication library that provides a transpar
 
 ## 📦 Installation
 
-### **Quick Install (Recommended)**
+### **🚀 Development Setup (Recommended)**
+
+**For modern Python environments with externally-managed-environment:**
+
+```bash
+# Clone repository
+git clone https://github.com/stream-ware/edpmt.git
+cd edpmt
+
+# Setup development environment (no pip installation needed)
+make dev-setup
+
+# Start using EDPMT immediately
+./bin/edpmt server --dev --port 8877
+./bin/edpmt info
+./bin/edpmt --help
+```
+
+### **🐍 Virtual Environment Setup**
+
+```bash
+# Create isolated virtual environment
+make venv-setup
+
+# Activate and use
+source venv/bin/activate
+edpmt server --dev --port 8877
+```
+
+### **📦 Traditional Installation (if supported)**
 
 ```bash
 # Install from PyPI (when published)
 pip install edpmt
 
-# Or install from source
+# Or install from source (may fail on managed environments)
 git clone https://github.com/stream-ware/edpmt.git
 cd edpmt
 pip install -e .
 ```
 
-### **With Hardware Support (Raspberry Pi)**
+### **🔧 Hardware Support (Raspberry Pi)**
 
 ```bash
-# Install with Raspberry Pi GPIO support
-pip install edpmt[rpi]
+# With dev-setup - hardware libraries auto-detected
+make dev-setup
+./bin/edpmt server --dev  # Auto-falls back to simulators
 
-# Or install all optional dependencies
-pip install edpmt[all]
+# With pip installation
+pip install edpmt[rpi]     # Raspberry Pi GPIO support
+pip install edpmt[all]     # All optional dependencies
 ```
 
 ### **Requirements**
@@ -294,22 +325,77 @@ See the [`examples/`](examples/) directory for complete project implementations:
 
 ## 🛠️ CLI Usage
 
+**⚠️ Important: Use local wrapper script `./bin/edpmt` for development setup**
+
 ```bash
-# Server management
-edpmt server --dev                    # Start in development mode
-edpmt server --tls --port 8888       # Production server with TLS
-edpmt info                            # Show system information
-edpmt config                          # Show configuration
+# Server management (development setup)
+./bin/edpmt server --dev                    # Start in development mode
+./bin/edpmt server --dev --port 8877        # Custom port
+./bin/edpmt info                            # Show system information
+./bin/edpmt --help                          # Show all commands
 
 # Client operations
-edpmt client --url https://server:8888  # Connect to remote server
-edpmt client --interactive              # Interactive client mode
-edpmt client --execute ACTION TARGET PARAMS  # Single command
+./bin/edpmt client --url https://localhost:8877  # Connect to server
+./bin/edpmt client --interactive                 # Interactive mode
 
-# Hardware testing
-edpmt hardware-test gpio              # Test GPIO functionality
-edpmt hardware-test i2c               # Test I2C bus
-edpmt hardware-test all               # Test all interfaces
+# Alternative with system installation
+edpmt server --dev                    # Only if installed via pip/venv
+edpmt info                            # System-wide command
+```
+
+## 🔧 Troubleshooting
+
+### **Common Installation Issues**
+
+**Problem: `bash: edpmt: command not found`**
+```bash
+# ❌ Don't use: edpmt server --dev
+# ✅ Use instead: ./bin/edpmt server --dev
+```
+
+**Problem: `externally-managed-environment` error**
+```bash
+# Solution 1: Use development setup (recommended)
+make dev-setup
+./bin/edpmt server --dev
+
+# Solution 2: Use virtual environment
+make venv-setup
+source venv/bin/activate
+edpmt server --dev
+```
+
+**Problem: `'NoneType' object has no attribute 'setup'` errors**
+```bash
+# Fixed in latest version - hardware interfaces now properly fall back to simulators
+./bin/edpmt server --dev  # Should run without hardware errors
+```
+
+**Problem: `[Errno 98] address already in use`**
+```bash
+# Use different port
+./bin/edpmt server --dev --port 8877
+./bin/edpmt server --dev --port 9999
+```
+
+### **Development Workflow**
+
+```bash
+# 1. Clone and setup
+git clone https://github.com/stream-ware/edpmt.git
+cd edpmt
+
+# 2. Development setup (no installation needed)
+make dev-setup
+
+# 3. Start server
+./bin/edpmt server --dev --port 8877
+
+# 4. Access web interface
+# Open: https://localhost:8877
+
+# 5. Run tests
+make test
 ```
 
 ## 🔧 Development
