@@ -6,121 +6,100 @@ using the RPi.GPIO library for Raspberry Pi hardware.
 """
 
 import logging
-from typing import Dict, Optional
+from typing import Dict, Any
 
 try:
     import RPi.GPIO as GPIO
 except ImportError:
     GPIO = None
 
-from .interfaces import GPIOHardwareInterface
+from .interfaces import GPIOInterface
 
 logger = logging.getLogger(__name__)
 
 
-class RPiGPIOInterface(GPIOHardwareInterface):
-    """GPIO Hardware Interface implementation for Raspberry Pi using RPi.GPIO."""
+class RPiGPIO(GPIOInterface):
+    """GPIO interface for Raspberry Pi using RPi.GPIO library."""
 
-    def __init__(self, name: str = "RPi-GPIO", config: Optional[Dict] = None):
-        super().__init__(name, config)
-        self.gpio = GPIO
-        self.pwm_objects: Dict[int, Any] = {}
+    def __init__(self, config: Dict[str, Any]):
+        super().__init__(name="Raspberry Pi GPIO", config=config)
+        self.logger = logging.getLogger(__name__)
+        self.initialized = False
+        if GPIO is None:
+            raise RuntimeError("RPi.GPIO library not available")
+        self.logger.info("Raspberry Pi GPIO interface created")
 
     async def initialize(self) -> bool:
-        """Initialize the GPIO interface using RPi.GPIO."""
-        if self.gpio is None:
-            logger.error("RPi.GPIO library not available")
-            return False
-
+        """Initialize the Raspberry Pi GPIO interface."""
+        self.logger.info("Initializing Raspberry Pi GPIO interface")
         try:
-            self.gpio.setmode(self.gpio.BCM)
-            self.gpio.setwarnings(False)
-            self.is_initialized = True
-            logger.info("RPi.GPIO interface initialized")
+            GPIO.setmode(GPIO.BCM)
+            GPIO.setwarnings(self.config.get('warnings', False))
+            self.initialized = True
             return True
         except Exception as e:
-            logger.error(f"Failed to initialize RPi.GPIO: {e}")
-            self.is_initialized = False
+            self.logger.error(f"Failed to initialize GPIO: {e}")
+            self.initialized = False
             return False
 
     async def cleanup(self) -> None:
-        """Clean up GPIO resources."""
-        if self.is_initialized and self.gpio:
-            # Stop any PWM objects
-            for pin, pwm in self.pwm_objects.items():
-                try:
-                    pwm.stop()
-                except Exception as e:
-                    logger.warning(f"Error stopping PWM on pin {pin}: {e}")
-            self.pwm_objects.clear()
-
+        """Cleanup GPIO resources."""
+        self.logger.info("Cleaning up Raspberry Pi GPIO interface")
+        if self.initialized:
             try:
-                self.gpio.cleanup()
-                logger.info("RPi.GPIO resources cleaned up")
+                GPIO.cleanup()
             except Exception as e:
-                logger.warning(f"Error during GPIO cleanup: {e}")
-            finally:
-                self.is_initialized = False
+                self.logger.warning(f"Error during GPIO cleanup: {e}")
+        self.initialized = False
 
-    async def set_pin(self, pin: int, value: int) -> bool:
-        """Set a GPIO pin to a specific value."""
-        if not self.is_initialized:
-            logger.error("GPIO interface not initialized")
-            return False
-
+    async def set_pin(self, pin: int, value: bool) -> None:
+        """Set the value of a GPIO pin."""
+        if not self.initialized:
+            raise RuntimeError("GPIO interface not initialized")
         try:
-            # Setup pin as output if not already
-            if pin not in self.pwm_objects:
-                self.gpio.setup(pin, self.gpio.OUT)
-            self.gpio.output(pin, value)
-            logger.debug(f"GPIO pin {pin} set to {value}")
-            return True
+            GPIO.output(pin, GPIO.HIGH if value else GPIO.LOW)
+            self.logger.info(f"Set GPIO pin {pin} to {value}")
         except Exception as e:
-            logger.error(f"Error setting GPIO pin {pin} to {value}: {e}")
-            return False
+            self.logger.error(f"Failed to set GPIO pin {pin}: {e}")
+            raise
 
-    async def get_pin(self, pin: int) -> int:
-        """Read the value of a GPIO pin."""
-        if not self.is_initialized:
-            logger.error("GPIO interface not initialized")
-            return 0
-
+    async def get_pin(self, pin: int) -> bool:
+        """Get the value of a GPIO pin."""
+        if not self.initialized:
+            raise RuntimeError("GPIO interface not initialized")
         try:
-            # Setup pin as input if not already
-            self.gpio.setup(pin, self.gpio.IN)
-            value = self.gpio.input(pin)
-            logger.debug(f"GPIO pin {pin} read: {value}")
+            value = GPIO.input(pin) == GPIO.HIGH
+            self.logger.info(f"Read GPIO pin {pin} as {value}")
             return value
         except Exception as e:
-            logger.error(f"Error reading GPIO pin {pin}: {e}")
-            return 0
+            self.logger.error(f"Failed to read GPIO pin {pin}: {e}")
+            raise
 
-    async def pwm(self, pin: int, frequency: float, duty_cycle: float) -> bool:
-        """Set PWM on a GPIO pin."""
-        if not self.is_initialized:
-            logger.error("GPIO interface not initialized")
-            return False
-
+    async def configure_pin(self, pin: int, mode: str) -> None:
+        """Configure the mode of a GPIO pin (input/output)."""
+        if not self.initialized:
+            raise RuntimeError("GPIO interface not initialized")
         try:
-            # Setup pin as output if not already
-            self.gpio.setup(pin, self.gpio.OUT)
-
-            # If PWM already exists for this pin, stop it
-            if pin in self.pwm_objects:
-                self.pwm_objects[pin].stop()
-                del self.pwm_objects[pin]
-
-            # Create new PWM object
-            pwm = self.gpio.PWM(pin, frequency)
-            pwm.start(duty_cycle)
-            self.pwm_objects[pin] = pwm
-
-            logger.debug(f"PWM set on GPIO pin {pin}: {frequency}Hz at {duty_cycle}% duty cycle")
-            return True
+            if mode == "input":
+                GPIO.setup(pin, GPIO.IN)
+            elif mode == "output":
+                GPIO.setup(pin, GPIO.OUT, initial=GPIO.LOW)
+            else:
+                raise ValueError(f"Invalid mode {mode}. Use 'input' or 'output'")
+            self.logger.info(f"Configured GPIO pin {pin} as {mode}")
         except Exception as e:
-            logger.error(f"Error setting PWM on GPIO pin {pin}: {e}")
-            return False
+            self.logger.error(f"Failed to configure GPIO pin {pin}: {e}")
+            raise
 
-    def is_supported(self) -> bool:
-        """Check if RPi.GPIO is supported on the current platform."""
-        return self.gpio is not None
+    async def execute(self, action: str, **params) -> Any:
+        """Execute a command on the GPIO interface."""
+        if action == "set":
+            await self.set_pin(params.get("pin", 0), params.get("value", False))
+            return True
+        elif action == "get":
+            return await self.get_pin(params.get("pin", 0))
+        elif action == "configure":
+            await self.configure_pin(params.get("pin", 0), params.get("mode", "output"))
+            return True
+        else:
+            raise ValueError(f"Unsupported action: {action}")

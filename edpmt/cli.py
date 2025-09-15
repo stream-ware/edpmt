@@ -17,6 +17,12 @@ from typing import Optional
 from .transparent import EDPMTransparent, EDPMClient, TransportType
 from .utils import setup_logging, get_system_info, ensure_dependencies, ConfigManager
 
+# Optional PortKeeper integration
+try:
+    from portkeeper import PortRegistry  # type: ignore
+except Exception:  # pragma: no cover - optional dependency
+    PortRegistry = None  # type: ignore
+
 
 def create_parser():
     """Create the main argument parser"""
@@ -89,7 +95,7 @@ Examples:
         '--port', '-p',
         type=int,
         default=8888,
-        help='Server port (default: 8888)'
+        help='Port to listen on (default: 8888)'
     )
     
     server_parser.add_argument(
@@ -126,6 +132,35 @@ Examples:
         choices=['local', 'network', 'browser', 'auto'],
         default='auto',
         help='Transport type (default: auto)'
+    )
+    
+    # Auto-port via PortKeeper (optional)
+    server_parser.add_argument(
+        '--auto-port',
+        action='store_true',
+        help='Automatically reserve a free port via PortKeeper (falls back to system-assigned port if PortKeeper is unavailable)'
+    )
+    server_parser.add_argument(
+        '--preferred-port',
+        type=int,
+        help='Preferred port to try first when using --auto-port'
+    )
+    server_parser.add_argument(
+        '--port-range',
+        nargs=2,
+        type=int,
+        metavar=('START', 'END'),
+        help='Port range [START, END] to search when using --auto-port'
+    )
+    server_parser.add_argument(
+        '--write-env-key',
+        metavar='KEY',
+        help='If set with --auto-port, write KEY=PORT to a .env file'
+    )
+    server_parser.add_argument(
+        '--env-path',
+        default='.env',
+        help='Path to .env file to write when using --auto-port (default: .env)'
     )
     
     # Client command
@@ -249,14 +284,16 @@ async def server_main(args):
     """Main function for server command"""
     print_header()
     
+    config = {
+        'dev_mode': args.dev,
+        'host': args.host,
+        'port': args.port,
+        'tls': not args.no_tls,
+        'hardware_simulators': args.hardware_simulators
+    }
     server = EDPMTransparent(
         name=args.name if args.name else f"edpm_{random.randint(100000, 999999)}",
-        host=args.host,
-        port=args.port,
-        tls=not args.no_tls,
-        dev_mode=args.dev,
-        hardware_simulators=args.hardware_simulators,
-        transport_type=TransportType[args.transport.upper()]
+        config=config
     )
     
     print(f"""

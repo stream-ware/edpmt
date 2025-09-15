@@ -34,16 +34,24 @@ from .transparent import (
     TransportType,
 )
 
-from .hardware import (
-    GPIOInterface,
-    I2CInterface,
-    SPIInterface,
-    UARTInterface,
-    GPIOSimulator,
-    I2CSimulator,
-    SPISimulator,
-    UARTSimulator,
-)
+try:
+    from .hardware import (
+        GPIOInterface,
+        I2CInterface,
+        SPIInterface,
+        UARTInterface,
+        GPIOSimulator,
+        I2CSimulator,
+        SPISimulator,
+        UARTSimulator,
+        USBInterface,
+        I2SInterface,
+        HardwareInterfaceFactory
+    )
+except ImportError as e:
+    print(f"Warning: Hardware interfaces not available - {e}")
+    # Provide dummy placeholders or None to prevent crashes
+    GPIOInterface = I2CInterface = SPIInterface = UARTInterface = GPIOSimulator = I2CSimulator = SPISimulator = UARTSimulator = USBInterface = I2SInterface = HardwareInterfaceFactory = None
 
 from .utils import (
     ensure_dependencies,
@@ -64,6 +72,9 @@ __all__ = [
     "I2CInterface", 
     "SPIInterface",
     "UARTInterface",
+    "USBInterface",
+    "I2SInterface",
+    "HardwareInterfaceFactory",
     
     # Simulators for development
     "GPIOSimulator",

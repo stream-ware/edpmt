@@ -7,378 +7,130 @@ can be initialized at runtime, making EDPMT hardware-agnostic.
 """
 
 from abc import ABC, abstractmethod
-import asyncio
-import logging
 from typing import Any, Dict, List, Optional
+import logging
 
 logger = logging.getLogger(__name__)
 
 
 class HardwareInterface(ABC):
-    """Abstract base class for all hardware interfaces in EDPMT."""
+    """Abstract base class for all hardware interfaces."""
 
-    def __init__(self, name: str, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, name: str, config: Dict[str, Any]):
         self.name = name
-        self.config = config or {}
-        self.is_initialized = False
+        self.config = config
+        self.initialized = False
 
     @abstractmethod
     async def initialize(self) -> bool:
-        """Initialize the hardware interface.
-
-        Returns:
-            bool: True if initialization is successful, False otherwise.
-        """
+        """Initialize the hardware interface."""
         pass
 
     @abstractmethod
     async def cleanup(self) -> None:
-        """Clean up resources used by the hardware interface."""
+        """Cleanup resources used by the hardware interface."""
         pass
 
     @abstractmethod
     async def execute(self, action: str, **params) -> Any:
-        """Execute a specific action on the hardware.
-
-        Args:
-            action (str): The action to perform (e.g., 'set', 'get', 'read', 'write').
-            **params: Additional parameters for the action.
-
-        Returns:
-            Any: The result of the action.
-        """
+        """Execute a command on the hardware."""
         pass
 
-    def is_supported(self) -> bool:
-        """Check if the hardware interface is supported on the current platform.
 
-        Returns:
-            bool: True if supported, False otherwise.
-        """
-        return True
-
-
-class GPIOHardwareInterface(HardwareInterface):
-    """Abstract interface for GPIO hardware operations."""
+class GPIOInterface(HardwareInterface):
+    """Abstract base class for GPIO interfaces."""
 
     @abstractmethod
-    async def set_pin(self, pin: int, value: int) -> bool:
-        """Set a GPIO pin to a specific value.
-
-        Args:
-            pin (int): The GPIO pin number.
-            value (int): The value to set (0 for LOW, 1 for HIGH).
-
-        Returns:
-            bool: True if successful, False otherwise.
-        """
+    async def set_pin(self, pin: int, value: bool) -> None:
+        """Set the value of a GPIO pin."""
         pass
 
     @abstractmethod
-    async def get_pin(self, pin: int) -> int:
-        """Read the value of a GPIO pin.
-
-        Args:
-            pin (int): The GPIO pin number.
-
-        Returns:
-            int: The value of the pin (0 or 1).
-        """
+    async def get_pin(self, pin: int) -> bool:
+        """Get the value of a GPIO pin."""
         pass
 
     @abstractmethod
-    async def pwm(self, pin: int, frequency: float, duty_cycle: float) -> bool:
-        """Set PWM on a GPIO pin.
-
-        Args:
-            pin (int): The GPIO pin number.
-            frequency (float): The frequency in Hz.
-            duty_cycle (float): The duty cycle percentage (0-100).
-
-        Returns:
-            bool: True if successful, False otherwise.
-        """
+    async def configure_pin(self, pin: int, mode: str) -> None:
+        """Configure the mode of a GPIO pin (input/output)."""
         pass
 
-    async def execute(self, action: str, **params) -> Any:
-        """Execute GPIO-specific actions."""
-        if action == 'set':
-            return await self.set_pin(params.get('pin', 0), params.get('value', 0))
-        elif action == 'get':
-            return await self.get_pin(params.get('pin', 0))
-        elif action == 'pwm':
-            return await self.pwm(params.get('pin', 0), params.get('frequency', 0.0), params.get('duty_cycle', 0.0))
-        else:
-            raise ValueError(f"Unsupported GPIO action: {action}")
 
-
-class I2CHardwareInterface(HardwareInterface):
-    """Abstract interface for I2C hardware operations."""
+class I2CInterface(HardwareInterface):
+    """Abstract base class for I2C interfaces."""
 
     @abstractmethod
-    async def scan(self, bus: int = 1) -> List[int]:
-        """Scan the I2C bus for connected devices.
-
-        Args:
-            bus (int): The I2C bus number (default is 1).
-
-        Returns:
-            List[int]: List of device addresses found on the bus.
-        """
+    async def scan(self) -> List[int]:
+        """Scan for devices on the I2C bus."""
         pass
 
     @abstractmethod
-    async def read(self, device: int, register: int, length: int = 1, bus: int = 1) -> bytes:
-        """Read data from an I2C device.
-
-        Args:
-            device (int): The I2C device address.
-            register (int): The register to read from.
-            length (int): Number of bytes to read (default is 1).
-            bus (int): The I2C bus number (default is 1).
-
-        Returns:
-            bytes: Data read from the device.
-        """
+    async def read(self, device_address: int, register: Optional[int] = None, length: int = 1) -> bytes:
+        """Read data from an I2C device."""
         pass
 
     @abstractmethod
-    async def write(self, device: int, data: bytes, bus: int = 1) -> bool:
-        """Write data to an I2C device.
-
-        Args:
-            device (int): The I2C device address.
-            data (bytes): Data to write.
-            bus (int): The I2C bus number (default is 1).
-
-        Returns:
-            bool: True if successful, False otherwise.
-        """
+    async def write(self, device_address: int, data: bytes, register: Optional[int] = None) -> None:
+        """Write data to an I2C device."""
         pass
 
-    async def execute(self, action: str, **params) -> Any:
-        """Execute I2C-specific actions."""
-        if action == 'scan':
-            return await self.scan(params.get('bus', 1))
-        elif action == 'read':
-            return await self.read(params.get('device', 0), params.get('register', 0), params.get('length', 1), params.get('bus', 1))
-        elif action == 'write':
-            return await self.write(params.get('device', 0), params.get('data', b''), params.get('bus', 1))
-        else:
-            raise ValueError(f"Unsupported I2C action: {action}")
 
-
-class SPIHardwareInterface(HardwareInterface):
-    """Abstract interface for SPI hardware operations."""
+class SPIInterface(HardwareInterface):
+    """Abstract base class for SPI interfaces."""
 
     @abstractmethod
-    async def transfer(self, data: bytes, bus: int = 0, device: int = 0) -> bytes:
-        """Transfer data over SPI.
+    async def transfer(self, data: bytes) -> bytes:
+        """Perform an SPI transfer."""
+        pass
 
-        Args:
-            data (bytes): Data to send.
-            bus (int): The SPI bus number (default is 0).
-            device (int): The SPI device number (default is 0).
 
-        Returns:
-            bytes: Data received from the device.
-        """
+class UARTInterface(HardwareInterface):
+    """Abstract base class for UART interfaces."""
+
+    @abstractmethod
+    async def send(self, data: bytes) -> None:
+        """Send data over UART."""
         pass
 
     @abstractmethod
-    async def configure(self, bus: int = 0, device: int = 0, mode: int = 0, speed: int = 1000000) -> bool:
-        """Configure SPI settings.
-
-        Args:
-            bus (int): The SPI bus number (default is 0).
-            device (int): The SPI device number (default is 0).
-            mode (int): SPI mode (0-3, default is 0).
-            speed (int): SPI speed in Hz (default is 1MHz).
-
-        Returns:
-            bool: True if successful, False otherwise.
-        """
+    async def receive(self, length: int, timeout: float = 1.0) -> bytes:
+        """Receive data over UART."""
         pass
 
-    async def execute(self, action: str, **params) -> Any:
-        """Execute SPI-specific actions."""
-        if action == 'transfer':
-            return await self.transfer(params.get('data', b''), params.get('bus', 0), params.get('device', 0))
-        elif action == 'configure':
-            return await self.configure(params.get('bus', 0), params.get('device', 0), params.get('mode', 0), params.get('speed', 1000000))
-        else:
-            raise ValueError(f"Unsupported SPI action: {action}")
 
-
-class UARTHardwareInterface(HardwareInterface):
-    """Abstract interface for UART hardware operations."""
+class USBInterface(HardwareInterface):
+    """Abstract base class for USB interfaces."""
 
     @abstractmethod
-    async def write(self, port: str, data: bytes, baudrate: int = 9600) -> bool:
-        """Write data to a UART port.
-
-        Args:
-            port (str): The UART port (e.g., '/dev/ttyS0').
-            data (bytes): Data to write.
-            baudrate (int): Baud rate (default is 9600).
-
-        Returns:
-            bool: True if successful, False otherwise.
-        """
+    async def connect(self, device_id: Optional[str] = None) -> bool:
+        """Connect to a USB device."""
         pass
 
     @abstractmethod
-    async def read(self, port: str, length: int = 1024, baudrate: int = 9600, timeout: float = 1.0) -> bytes:
-        """Read data from a UART port.
-
-        Args:
-            port (str): The UART port (e.g., '/dev/ttyS0').
-            length (int): Maximum number of bytes to read (default is 1024).
-            baudrate (int): Baud rate (default is 9600).
-            timeout (float): Read timeout in seconds (default is 1.0).
-
-        Returns:
-            bytes: Data read from the port.
-        """
-        pass
-
-    async def execute(self, action: str, **params) -> Any:
-        """Execute UART-specific actions."""
-        if action == 'write':
-            return await self.write(params.get('port', ''), params.get('data', b''), params.get('baudrate', 9600))
-        elif action == 'read':
-            return await self.read(params.get('port', ''), params.get('length', 1024), params.get('baudrate', 9600), params.get('timeout', 1.0))
-        else:
-            raise ValueError(f"Unsupported UART action: {action}")
-
-
-class USBHardwareInterface(HardwareInterface):
-    """Abstract interface for USB hardware operations."""
-
-    @abstractmethod
-    async def list_devices(self) -> List[Dict[str, Any]]:
-        """List connected USB devices.
-
-        Returns:
-            List[Dict[str, Any]]: List of dictionaries containing device information.
-        """
+    async def disconnect(self) -> None:
+        """Disconnect from a USB device."""
         pass
 
     @abstractmethod
-    async def connect(self, device_id: str) -> bool:
-        """Connect to a specific USB device.
-
-        Args:
-            device_id (str): The ID or serial number of the device.
-
-        Returns:
-            bool: True if successful, False otherwise.
-        """
+    async def send(self, data: bytes, endpoint: Optional[int] = None) -> None:
+        """Send data to a USB device."""
         pass
 
     @abstractmethod
-    async def disconnect(self, device_id: str) -> bool:
-        """Disconnect from a specific USB device.
-
-        Args:
-            device_id (str): The ID or serial number of the device.
-
-        Returns:
-            bool: True if successful, False otherwise.
-        """
+    async def receive(self, length: int, endpoint: Optional[int] = None, timeout: float = 1.0) -> bytes:
+        """Receive data from a USB device."""
         pass
 
-    @abstractmethod
-    async def send_data(self, device_id: str, data: bytes) -> bool:
-        """Send data to a USB device.
 
-        Args:
-            device_id (str): The ID or serial number of the device.
-            data (bytes): Data to send.
-
-        Returns:
-            bool: True if successful, False otherwise.
-        """
-        pass
+class I2SInterface(HardwareInterface):
+    """Abstract base class for I2S interfaces."""
 
     @abstractmethod
-    async def receive_data(self, device_id: str, length: int = 1024, timeout: float = 1.0) -> bytes:
-        """Receive data from a USB device.
-
-        Args:
-            device_id (str): The ID or serial number of the device.
-            length (int): Maximum number of bytes to read (default is 1024).
-            timeout (float): Read timeout in seconds (default is 1.0).
-
-        Returns:
-            bytes: Data received from the device.
-        """
-        pass
-
-    async def execute(self, action: str, **params) -> Any:
-        """Execute USB-specific actions."""
-        if action == 'list':
-            return await self.list_devices()
-        elif action == 'connect':
-            return await self.connect(params.get('device_id', ''))
-        elif action == 'disconnect':
-            return await self.disconnect(params.get('device_id', ''))
-        elif action == 'send':
-            return await self.send_data(params.get('device_id', ''), params.get('data', b''))
-        elif action == 'receive':
-            return await self.receive_data(params.get('device_id', ''), params.get('length', 1024), params.get('timeout', 1.0))
-        else:
-            raise ValueError(f"Unsupported USB action: {action}")
-
-
-class I2SHardwareInterface(HardwareInterface):
-    """Abstract interface for I2S (Inter-IC Sound) hardware operations."""
-
-    @abstractmethod
-    async def configure(self, sample_rate: int = 44100, bits_per_sample: int = 16, channels: int = 2) -> bool:
-        """Configure I2S settings.
-
-        Args:
-            sample_rate (int): Sample rate in Hz (default is 44100).
-            bits_per_sample (int): Bits per sample (default is 16).
-            channels (int): Number of channels (default is 2 for stereo).
-
-        Returns:
-            bool: True if successful, False otherwise.
-        """
-        pass
-
-    @abstractmethod
-    async def play(self, data: bytes) -> bool:
-        """Play audio data over I2S.
-
-        Args:
-            data (bytes): Audio data to play.
-
-        Returns:
-            bool: True if successful, False otherwise.
-        """
+    async def play(self, data: bytes) -> None:
+        """Play audio data over I2S."""
         pass
 
     @abstractmethod
     async def record(self, duration: float) -> bytes:
-        """Record audio data from I2S.
-
-        Args:
-            duration (float): Duration to record in seconds.
-
-        Returns:
-            bytes: Recorded audio data.
-        """
+        """Record audio data over I2S."""
         pass
-
-    async def execute(self, action: str, **params) -> Any:
-        """Execute I2S-specific actions."""
-        if action == 'configure':
-            return await self.configure(params.get('sample_rate', 44100), params.get('bits_per_sample', 16), params.get('channels', 2))
-        elif action == 'play':
-            return await self.play(params.get('data', b''))
-        elif action == 'record':
-            return await self.record(params.get('duration', 1.0))
-        else:
-            raise ValueError(f"Unsupported I2S action: {action}")
