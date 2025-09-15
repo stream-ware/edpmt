@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Blocks Demo - EDPMT Visual Blocks</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .standalone-container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: rgba(255,255,255,0.95);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .standalone-header { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        .standalone-header h1 { 
+            color: #333; 
+            margin-bottom: 10px; 
+        }
+        .project-visualization { 
+            margin: 20px 0; 
+        }
+        .project-header { 
+            background: #f8f9fa; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+        }
+        .project-header h2 { 
+            color: #333; 
+            margin-bottom: 10px; 
+        }
+        .project-description { 
+            color: #666; 
+            margin-bottom: 15px; 
+            font-size: 1.1em;
+        }
+        .project-meta { 
+            display: flex; 
+            gap: 20px; 
+            font-size: 0.9em; 
+            color: #777;
+        }
+        .block-flow { 
+            padding: 20px 0; 
+        }
+        .block-item { 
+            margin: 15px 0; 
+            border: 2px solid #ddd; 
+            border-radius: 8px; 
+            background: white; 
+            border-left-width: 5px;
+            transition: all 0.3s ease;
+        }
+        .block-item:hover { 
+            transform: translateX(5px); 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .block-header { 
+            padding: 15px; 
+            color: white; 
+            font-weight: bold; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px;
+        }
+        .block-content { 
+            padding: 15px; 
+        }
+        .block-inputs { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 10px; 
+            margin-bottom: 10px;
+        }
+        .input-item { 
+            background: #f0f0f0; 
+            padding: 5px 10px; 
+            border-radius: 4px; 
+            font-size: 0.9em;
+        }
+        .input-key { 
+            font-weight: bold; 
+            color: #555;
+        }
+        .input-value { 
+            color: #333; 
+            margin-left: 5px;
+        }
+        .block-description { 
+            font-style: italic; 
+            color: #666; 
+            margin-top: 10px;
+        }
+        .block-children, .block-else { 
+            margin-left: 20px; 
+            border-left: 2px dashed #ccc; 
+            padding-left: 15px; 
+            margin-top: 15px;
+        }
+        .children-label, .else-label { 
+            font-weight: bold; 
+            color: #555; 
+            margin-bottom: 10px; 
+            cursor: pointer;
+            user-select: none;
+        }
+        .children-label:hover, .else-label:hover { 
+            color: #333; 
+        }
+        .block-connector { 
+            text-align: center; 
+            margin: 5px 0; 
+        }
+        .connector-line { 
+            width: 2px; 
+            height: 20px; 
+            background: #ccc; 
+            margin: 0 auto; 
+        }
+        .connector-arrow { 
+            color: #ccc; 
+            font-size: 12px; 
+        }
+        .project-footer { 
+            margin-top: 30px; 
+            padding: 20px; 
+            background: #f8f9fa; 
+            border-radius: 8px;
+        }
+        .project-footer h4 { 
+            margin-bottom: 10px; 
+            color: #333;
+        }
+        .project-footer ul { 
+            margin: 10px 0; 
+            padding-left: 20px;
+        }
+        .project-footer li { 
+            margin: 5px 0; 
+            color: #555;
+        }
+        .hardware-requirements, .connections, .project-notes { 
+            margin-bottom: 20px; 
+        }
+        /* Block type specific colors */
+        .block-item[data-type="set-variable"] { border-left-color: #FFC107; }
+        .block-item[data-type="i2c-scan"] { border-left-color: #9C27B0; }
+        .block-item[data-type="play-tone"] { border-left-color: #00BCD4; }
+        .block-item[data-type="repeat"] { border-left-color: #FF5722; }
+        .block-item[data-type="gpio-set"] { border-left-color: #4CAF50; }
+        .block-item[data-type="wait"] { border-left-color: #607D8B; }
+        .block-item[data-type="gpio-pwm"] { border-left-color: #FF9800; }
+        .block-item[data-type="while"] { border-left-color: #795548; }
+        .block-item[data-type="gpio-read"] { border-left-color: #2196F3; }
+        .block-item[data-type="if"] { border-left-color: #E91E63; }
+        .block-item[data-type="get-variable"] { border-left-color: #FFEB3B; }
+        .block-item[data-type="beep-pattern"] { border-left-color: #009688; }
+        .block-item[data-type="i2c-read"] { border-left-color: #673AB7; }
+        .block-item[data-type="i2c-write"] { border-left-color: #3F51B5; }
+    </style>
+</head>
+<body>
+    <div class="standalone-container">
+        <header class="standalone-header">
+            <h1>🎨 EDPMT Visual Programming</h1>
+            <p>Project Visualization: All Blocks Demo</p>
+        </header>
+        <main id="project-container">
+            <div class="project-visualization">
+                <div class="project-header">
+                    <h2>All Blocks Demo</h2>
+                    <p class="project-description">Comprehensive demonstration of all available block types in EDPMT Visual Programming</p>
+                    <div class="project-meta">
+                        <span class="author">👤 EDPMT Development Team</span>
+                        <span class="version">📦 v1.0</span>
+                    </div>
+                </div>
+                <div class="block-flow">
+                    <!-- Block 1: Set Variable -->
+                    <div class="block-item" data-type="set-variable">
+                        <div class="block-header" style="background-color: #FFC107;">
+                            <span class="block-icon">💾</span>
+                            <span class="block-type">Set Variable</span>
+                            <span class="block-id">#block_1</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">name:</span>
+                                    <span class="input-value">counter</span>
+                                </div>
+                                <div class="input-item">
+                                    <span class="input-key">value:</span>
+                                    <span class="input-value">0</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 Initialize counter variable</div>
+                        </div>
+                    </div>
+
+                    <div class="block-connector">
+                        <div class="connector-line"></div>
+                        <div class="connector-arrow">▼</div>
+                    </div>
+
+                    <!-- Block 2: I2C Scan -->
+                    <div class="block-item" data-type="i2c-scan">
+                        <div class="block-header" style="background-color: #9C27B0;">
+                            <span class="block-icon">🔍</span>
+                            <span class="block-type">I2C Scan</span>
+                            <span class="block-id">#block_2</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">No parameters</div>
+                            <div class="block-description">💬 Scan for I2C devices</div>
+                        </div>
+                    </div>
+
+                    <div class="block-connector">
+                        <div class="connector-line"></div>
+                        <div class="connector-arrow">▼</div>
+                    </div>
+
+                    <!-- Block 3: Play Tone -->
+                    <div class="block-item" data-type="play-tone">
+                        <div class="block-header" style="background-color: #00BCD4;">
+                            <span class="block-icon">🎵</span>
+                            <span class="block-type">Play Tone</span>
+                            <span class="block-id">#block_3</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">frequency:</span>
+                                    <span class="input-value">1000</span>
+                                </div>
+                                <div class="input-item">
+                                    <span class="input-key">duration:</span>
+                                    <span class="input-value">0.5</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 Startup sound</div>
+                        </div>
+                    </div>
+
+                    <div class="block-connector">
+                        <div class="connector-line"></div>
+                        <div class="connector-arrow">▼</div>
+                    </div>
+
+                    <!-- Block 4: Repeat Loop with Children -->
+                    <div class="block-item" data-type="repeat">
+                        <div class="block-header" style="background-color: #FF5722;">
+                            <span class="block-icon">🔄</span>
+                            <span class="block-type">Repeat</span>
+                            <span class="block-id">#block_4</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">times:</span>
+                                    <span class="input-value">5</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 Blink sequence 5 times</div>
+                        </div>
+                        
+                        <div class="block-children">
+                            <div class="children-label">Contains 6 blocks:</div>
+                            
+                            <!-- Child blocks -->
+                            <div class="block-item" data-type="gpio-set">
+                                <div class="block-header" style="background-color: #4CAF50;">
+                                    <span class="block-icon">📍</span>
+                                    <span class="block-type">GPIO Set</span>
+                                    <span class="block-id">#block_5</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-inputs">
+                                        <div class="input-item">
+                                            <span class="input-key">pin:</span>
+                                            <span class="input-value">18</span>
+                                        </div>
+                                        <div class="input-item">
+                                            <span class="input-key">value:</span>
+                                            <span class="input-value">1</span>
+                                        </div>
+                                    </div>
+                                    <div class="block-description">💬 Turn on red LED</div>
+                                </div>
+                            </div>
+
+                            <div class="block-connector">
+                                <div class="connector-line"></div>
+                                <div class="connector-arrow">▼</div>
+                            </div>
+
+                            <div class="block-item" data-type="wait">
+                                <div class="block-header" style="background-color: #607D8B;">
+                                    <span class="block-icon">⏰</span>
+                                    <span class="block-type">Wait</span>
+                                    <span class="block-id">#block_6</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-inputs">
+                                        <div class="input-item">
+                                            <span class="input-key">seconds:</span>
+                                            <span class="input-value">0.5</span>
+                                        </div>
+                                    </div>
+                                    <div class="block-description">💬 Wait half second</div>
+                                </div>
+                            </div>
+
+                            <!-- Additional child blocks for PWM example -->
+                            <div class="block-connector">
+                                <div class="connector-line"></div>
+                                <div class="connector-arrow">▼</div>
+                            </div>
+
+                            <div class="block-item" data-type="gpio-pwm">
+                                <div class="block-header" style="background-color: #FF9800;">
+                                    <span class="block-icon">📶</span>
+                                    <span class="block-type">GPIO PWM</span>
+                                    <span class="block-id">#block_8</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-inputs">
+                                        <div class="input-item">
+                                            <span class="input-key">pin:</span>
+                                            <span class="input-value">19</span>
+                                        </div>
+                                        <div class="input-item">
+                                            <span class="input-key">frequency:</span>
+                                            <span class="input-value">1000</span>
+                                        </div>
+                                        <div class="input-item">
+                                            <span class="input-key">duty_cycle:</span>
+                                            <span class="input-value">50</span>
+                                        </div>
+                                    </div>
+                                    <div class="block-description">💬 PWM on yellow LED</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="block-connector">
+                        <div class="connector-line"></div>
+                        <div class="connector-arrow">▼</div>
+                    </div>
+
+                    <!-- Complex While Loop with If/Else -->
+                    <div class="block-item" data-type="while">
+                        <div class="block-header" style="background-color: #795548;">
+                            <span class="block-icon">🔁</span>
+                            <span class="block-type">While</span>
+                            <span class="block-id">#block_11</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">condition:</span>
+                                    <span class="input-value">counter < 3</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 Wait for button presses (max 3)</div>
+                        </div>
+                        
+                        <div class="block-children">
+                            <div class="children-label">Contains conditional logic:</div>
+                            
+                            <div class="block-item" data-type="gpio-read">
+                                <div class="block-header" style="background-color: #2196F3;">
+                                    <span class="block-icon">📥</span>
+                                    <span class="block-type">GPIO Read</span>
+                                    <span class="block-id">#block_12</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-inputs">
+                                        <div class="input-item">
+                                            <span class="input-key">pin:</span>
+                                            <span class="input-value">21</span>
+                                        </div>
+                                    </div>
+                                    <div class="block-description">💬 Read button state</div>
+                                </div>
+                            </div>
+
+                            <div class="block-connector">
+                                <div class="connector-line"></div>
+                                <div class="connector-arrow">▼</div>
+                            </div>
+
+                            <!-- If condition block -->
+                            <div class="block-item" data-type="if">
+                                <div class="block-header" style="background-color: #E91E63;">
+                                    <span class="block-icon">❓</span>
+                                    <span class="block-type">If</span>
+                                    <span class="block-id">#block_13</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-inputs">
+                                        <div class="input-item">
+                                            <span class="input-key">condition:</span>
+                                            <span class="input-value">button_state == 1</span>
+                                        </div>
+                                    </div>
+                                    <div class="block-description">💬 If button pressed, increment counter and flash green LED</div>
+                                </div>
+                                
+                                <!-- If children -->
+                                <div class="block-children">
+                                    <div class="children-label">When TRUE:</div>
+                                    
+                                    <div class="block-item" data-type="get-variable">
+                                        <div class="block-header" style="background-color: #FFEB3B;">
+                                            <span class="block-icon">📂</span>
+                                            <span class="block-type">Get Variable</span>
+                                            <span class="block-id">#block_14</span>
+                                        </div>
+                                        <div class="block-content">
+                                            <div class="block-inputs">
+                                                <div class="input-item">
+                                                    <span class="input-key">name:</span>
+                                                    <span class="input-value">counter</span>
+                                                </div>
+                                            </div>
+                                            <div class="block-description">💬 Get current counter value</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="block-connector">
+                                        <div class="connector-line"></div>
+                                        <div class="connector-arrow">▼</div>
+                                    </div>
+
+                                    <div class="block-item" data-type="beep-pattern">
+                                        <div class="block-header" style="background-color: #009688;">
+                                            <span class="block-icon">🔊</span>
+                                            <span class="block-type">Beep Pattern</span>
+                                            <span class="block-id">#block_16</span>
+                                        </div>
+                                        <div class="block-content">
+                                            <div class="block-inputs">
+                                                <div class="input-item">
+                                                    <span class="input-key">pattern:</span>
+                                                    <span class="input-value">single</span>
+                                                </div>
+                                            </div>
+                                            <div class="block-description">💬 Single beep for button press</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Else children -->
+                                <div class="block-else">
+                                    <div class="else-label">ELSE:</div>
+                                    
+                                    <div class="block-item" data-type="wait">
+                                        <div class="block-header" style="background-color: #607D8B;">
+                                            <span class="block-icon">⏰</span>
+                                            <span class="block-type">Wait</span>
+                                            <span class="block-id">#block_20</span>
+                                        </div>
+                                        <div class="block-content">
+                                            <div class="block-inputs">
+                                                <div class="input-item">
+                                                    <span class="input-key">seconds:</span>
+                                                    <span class="input-value">0.1</span>
+                                                </div>
+                                            </div>
+                                            <div class="block-description">💬 Short wait when button not pressed</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-footer">
+                    <div class="hardware-requirements">
+                        <h4>🔧 Hardware Requirements:</h4>
+                        <ul>
+                            <li>LEDs on GPIO pins 18, 19, 20</li>
+                            <li>Button on GPIO pin 21</li>
+                            <li>I2C sensor at address 0x48</li>
+                            <li>Audio output capability</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="connections">
+                        <h4>🔌 Connections:</h4>
+                        <ul>
+                            <li><strong>red_led:</strong> GPIO pin 18</li>
+                            <li><strong>yellow_led:</strong> GPIO pin 19</li>
+                            <li><strong>green_led:</strong> GPIO pin 20</li>
+                            <li><strong>button:</strong> GPIO pin 21</li>
+                            <li><strong>sensor:</strong> I2C address 0x48</li>
+                            <li><strong>audio:</strong> System audio output</li>
+                        </ul>
+                    </div>
+
+                    <div class="project-notes">
+                        <h4>📝 Notes:</h4>
+                        <ul>
+                            <li>This project demonstrates all available block types:</li>
+                            <li>- GPIO Set/Read/PWM blocks</li>
+                            <li>- I2C Scan/Read/Write blocks</li>
+                            <li>- Control blocks: Repeat, While, If/Else</li>
+                            <li>- Variable blocks: Set/Get Variable</li>
+                            <li>- Audio blocks: Play Tone, Beep Pattern</li>
+                            <li>- Wait/Delay blocks</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        // Add basic interactivity
+        document.querySelectorAll('.block-item').forEach(block => {
+            block.addEventListener('click', function(e) {
+                e.stopPropagation();
+                this.classList.toggle('expanded');
+            });
+        });
+        
+        document.querySelectorAll('.children-label, .else-label').forEach(label => {
+            label.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const section = this.parentElement;
+                section.classList.toggle('collapsed');
+                
+                const content = Array.from(section.children).slice(1);
+                content.forEach(el => {
+                    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

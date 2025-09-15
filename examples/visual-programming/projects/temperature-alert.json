@@ -1,0 +1,347 @@
+{
+  "name": "Temperature Alert System",
+  "description": "Advanced temperature monitoring with escalating alerts and data logging",
+  "author": "EDPMT Visual Programming",
+  "version": "1.0",
+  "hardware_requirements": [
+    "I2C temperature sensor at address 0x48",
+    "Warning LED on GPIO pin 18",
+    "Cooling fan on GPIO pin 19",
+    "Status LED on GPIO pin 20",
+    "Audio output capability"
+  ],
+  "connections": {
+    "temp_sensor": "I2C address 0x48",
+    "warning_led": "GPIO pin 18 (red)",
+    "cooling_fan": "GPIO pin 19",
+    "status_led": "GPIO pin 20 (green)",
+    "audio": "System audio output"
+  },
+  "blocks": [
+    {
+      "id": "block_1",
+      "type": "set-variable",
+      "inputs": {
+        "name": "temp_high_threshold",
+        "value": "30"
+      },
+      "description": "High temperature threshold (°C)"
+    },
+    {
+      "id": "block_2",
+      "type": "set-variable",
+      "inputs": {
+        "name": "temp_critical_threshold",
+        "value": "35"
+      },
+      "description": "Critical temperature threshold (°C)"
+    },
+    {
+      "id": "block_3",
+      "type": "set-variable",
+      "inputs": {
+        "name": "reading_count",
+        "value": "0"
+      },
+      "description": "Initialize reading counter"
+    },
+    {
+      "id": "block_4",
+      "type": "i2c-scan",
+      "inputs": {},
+      "description": "Scan for temperature sensor"
+    },
+    {
+      "id": "block_5",
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "20",
+        "value": "1"
+      },
+      "description": "Turn on status LED (system active)"
+    },
+    {
+      "id": "block_6",
+      "type": "beep-pattern",
+      "inputs": {
+        "pattern": "single"
+      },
+      "description": "System startup confirmation"
+    },
+    {
+      "id": "block_7",
+      "type": "while",
+      "inputs": {
+        "condition": "reading_count < 100"
+      },
+      "children": [
+        {
+          "id": "block_8",
+          "type": "i2c-read",
+          "inputs": {
+            "device": "48",
+            "register": "0",
+            "length": "2"
+          },
+          "output_variable": "current_temp",
+          "description": "Read current temperature"
+        },
+        {
+          "id": "block_9",
+          "type": "get-variable",
+          "inputs": {
+            "name": "reading_count"
+          },
+          "output_variable": "count",
+          "description": "Get current reading count"
+        },
+        {
+          "id": "block_10",
+          "type": "set-variable",
+          "inputs": {
+            "name": "reading_count",
+            "value": "count + 1"
+          },
+          "description": "Increment reading counter"
+        },
+        {
+          "id": "block_11",
+          "type": "if",
+          "inputs": {
+            "condition": "current_temp > temp_critical_threshold"
+          },
+          "children": [
+            {
+              "id": "block_12",
+              "type": "gpio-set",
+              "inputs": {
+                "pin": "18",
+                "value": "1"
+              },
+              "description": "Turn on warning LED"
+            },
+            {
+              "id": "block_13",
+              "type": "gpio-set",
+              "inputs": {
+                "pin": "19",
+                "value": "1"
+              },
+              "description": "Turn on cooling fan"
+            },
+            {
+              "id": "block_14",
+              "type": "beep-pattern",
+              "inputs": {
+                "pattern": "SOS"
+              },
+              "description": "Critical temperature alert"
+            },
+            {
+              "id": "block_15",
+              "type": "repeat",
+              "inputs": {
+                "times": "5"
+              },
+              "children": [
+                {
+                  "id": "block_16",
+                  "type": "play-tone",
+                  "inputs": {
+                    "frequency": "2000",
+                    "duration": "0.2"
+                  }
+                },
+                {
+                  "id": "block_17",
+                  "type": "wait",
+                  "inputs": {
+                    "seconds": "0.1"
+                  }
+                },
+                {
+                  "id": "block_18",
+                  "type": "play-tone",
+                  "inputs": {
+                    "frequency": "1500",
+                    "duration": "0.2"
+                  }
+                },
+                {
+                  "id": "block_19",
+                  "type": "wait",
+                  "inputs": {
+                    "seconds": "0.1"
+                  }
+                }
+              ],
+              "description": "Critical alert siren"
+            }
+          ],
+          "else_children": [
+            {
+              "id": "block_20",
+              "type": "if",
+              "inputs": {
+                "condition": "current_temp > temp_high_threshold"
+              },
+              "children": [
+                {
+                  "id": "block_21",
+                  "type": "gpio-set",
+                  "inputs": {
+                    "pin": "18",
+                    "value": "1"
+                  },
+                  "description": "Turn on warning LED"
+                },
+                {
+                  "id": "block_22",
+                  "type": "gpio-pwm",
+                  "inputs": {
+                    "pin": "19",
+                    "frequency": "1000",
+                    "duty_cycle": "75"
+                  },
+                  "description": "Moderate fan speed"
+                },
+                {
+                  "id": "block_23",
+                  "type": "beep-pattern",
+                  "inputs": {
+                    "pattern": "double"
+                  },
+                  "description": "High temperature warning"
+                },
+                {
+                  "id": "block_24",
+                  "type": "play-tone",
+                  "inputs": {
+                    "frequency": "1000",
+                    "duration": "0.5"
+                  },
+                  "description": "Warning tone"
+                }
+              ],
+              "else_children": [
+                {
+                  "id": "block_25",
+                  "type": "gpio-set",
+                  "inputs": {
+                    "pin": "18",
+                    "value": "0"
+                  },
+                  "description": "Turn off warning LED"
+                },
+                {
+                  "id": "block_26",
+                  "type": "gpio-set",
+                  "inputs": {
+                    "pin": "19",
+                    "value": "0"
+                  },
+                  "description": "Turn off cooling fan"
+                },
+                {
+                  "id": "block_27",
+                  "type": "play-tone",
+                  "inputs": {
+                    "frequency": "500",
+                    "duration": "0.1"
+                  },
+                  "description": "Normal temperature beep"
+                }
+              ],
+              "description": "Handle high temperature (non-critical)"
+            }
+          ],
+          "description": "Temperature level evaluation"
+        },
+        {
+          "id": "block_28",
+          "type": "wait",
+          "inputs": {
+            "seconds": "5"
+          },
+          "description": "Wait 5 seconds between readings"
+        },
+        {
+          "id": "block_29",
+          "type": "gpio-set",
+          "inputs": {
+            "pin": "20",
+            "value": "0"
+          },
+          "description": "Blink status LED off"
+        },
+        {
+          "id": "block_30",
+          "type": "wait",
+          "inputs": {
+            "seconds": "0.2"
+          },
+          "description": "Status LED blink pause"
+        },
+        {
+          "id": "block_31",
+          "type": "gpio-set",
+          "inputs": {
+            "pin": "20",
+            "value": "1"
+          },
+          "description": "Blink status LED on"
+        }
+      ],
+      "description": "Main temperature monitoring loop"
+    },
+    {
+      "id": "block_32",
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "18",
+        "value": "0"
+      },
+      "description": "Turn off all outputs"
+    },
+    {
+      "id": "block_33",
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "19",
+        "value": "0"
+      },
+      "description": "Turn off all outputs"
+    },
+    {
+      "id": "block_34",
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "20",
+        "value": "0"
+      },
+      "description": "Turn off all outputs"
+    },
+    {
+      "id": "block_35",
+      "type": "beep-pattern",
+      "inputs": {
+        "pattern": "triple"
+      },
+      "description": "System shutdown signal"
+    }
+  ],
+  "notes": [
+    "Advanced temperature monitoring with two alert levels:",
+    "- High Alert (>30°C): Warning LED + moderate fan + double beep",
+    "- Critical Alert (>35°C): Warning LED + full fan + SOS pattern + siren",
+    "Status LED blinks every 5 seconds to show system activity",
+    "Takes 100 temperature readings then stops",
+    "Fan uses PWM for variable speed control",
+    "Audio escalation provides immediate feedback",
+    "Hardware connections:",
+    "  - Temperature sensor: I2C address 0x48",
+    "  - Warning LED: GPIO pin 18 (red)",
+    "  - Cooling fan: GPIO pin 19",
+    "  - Status LED: GPIO pin 20 (green)"
+  ]
+}

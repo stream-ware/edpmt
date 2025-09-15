@@ -34,7 +34,14 @@
         <div class="main-content">
             <!-- Block Palette -->
             <div class="block-palette">
-                <h3><i class="fas fa-toolbox"></i> Block Palette</h3>
+                <div class="palette-tabs">
+                    <button class="palette-tab-btn active" data-tab="blocks"><i class="fas fa-toolbox"></i> Blocks</button>
+                    <button class="palette-tab-btn" data-tab="projects"><i class="fas fa-folder"></i> Projects</button>
+                    <button class="palette-tab-btn" data-tab="templates"><i class="fas fa-clipboard-list"></i> Templates</button>
+                </div>
+                
+                <div id="blocks" class="palette-tab-content active">
+                    <h3><i class="fas fa-toolbox"></i> Block Palette</h3>
                 
                 <!-- GPIO Blocks -->
                 <div class="category">
@@ -154,22 +161,19 @@
                     </div>
                 </div>
 
-                <!-- Templates -->
-                <div class="category">
-                    <h4><i class="fas fa-clipboard-list"></i> Templates</h4>
-                    <div class="blocks">
-                        <button class="template-btn" data-template="led-blink">
-                            <i class="fas fa-lightbulb"></i> LED Blink
-                        </button>
-                        <button class="template-btn" data-template="sensor-monitor">
-                            <i class="fas fa-thermometer-half"></i> Sensor Monitor
-                        </button>
-                        <button class="template-btn" data-template="traffic-light">
-                            <i class="fas fa-traffic-light"></i> Traffic Light
-                        </button>
-                        <button class="template-btn" data-template="alarm-system">
-                            <i class="fas fa-shield-alt"></i> Alarm System
-                        </button>
+                </div>
+                
+                <div id="projects" class="palette-tab-content">
+                    <h3><i class="fas fa-folder"></i> Projects</h3>
+                    <div id="project-list" class="project-list">
+                        <!-- Dynamic project list will be loaded here -->
+                    </div>
+                </div>
+                
+                <div id="templates" class="palette-tab-content">
+                    <h3><i class="fas fa-clipboard-list"></i> Templates</h3>
+                    <div id="template-list" class="template-list">
+                        <!-- Dynamic template list will be loaded here -->
                     </div>
                 </div>
             </div>
@@ -191,6 +195,7 @@
                     <button class="tab-btn active" data-tab="console">Console</button>
                     <button class="tab-btn" data-tab="variables">Variables</button>
                     <button class="tab-btn" data-tab="code">Generated Code</button>
+                    <button class="tab-btn" data-tab="tests">UI Tests</button>
                 </div>
                 
                 <div id="console" class="tab-content active">
@@ -207,6 +212,18 @@
                 
                 <div id="code" class="tab-content">
                     <pre class="generated-code"></pre>
+                </div>
+                
+                <div id="tests" class="tab-content">
+                    <div class="test-controls">
+                        <button id="runUITests" class="btn btn-primary">
+                            <i class="fas fa-vial"></i> Run UI Tests
+                        </button>
+                        <button id="runAllTests" class="btn btn-secondary">
+                            <i class="fas fa-flask"></i> Run All Tests
+                        </button>
+                    </div>
+                    <div id="test-results" class="test-results"></div>
                 </div>
             </div>
         </div>
@@ -226,6 +243,9 @@
     </div>
 
     <script src="config.js" type="module"></script>
+    <script src="project-loader.js" type="module"></script>
+    <script src="block-renderer.js" type="module"></script>
+    <script src="ui-tests.js" type="module"></script>
     <script src="visual-programming.js" type="module"></script>
 </body>
 </html>

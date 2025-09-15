@@ -26,7 +26,7 @@ Build hardware automation programs using visual blocks - no coding required!
    ```bash
    # Open in browser
    cd examples/visual-programming
-   python3 -m http.server 8080
+   python3 -m http.server 8082
    # Navigate to http://localhost:8080
    ```
 

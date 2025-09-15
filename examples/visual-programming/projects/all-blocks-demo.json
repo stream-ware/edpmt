@@ -1,0 +1,354 @@
+{
+  "name": "All Blocks Demo",
+  "description": "Comprehensive demonstration of all available block types in EDPMT Visual Programming",
+  "author": "EDPMT Development Team",
+  "version": "1.0",
+  "hardware_requirements": [
+    "LEDs on GPIO pins 18, 19, 20",
+    "Button on GPIO pin 21",
+    "I2C sensor at address 0x48",
+    "Audio output capability"
+  ],
+  "connections": {
+    "red_led": "GPIO pin 18",
+    "yellow_led": "GPIO pin 19", 
+    "green_led": "GPIO pin 20",
+    "button": "GPIO pin 21",
+    "sensor": "I2C address 0x48",
+    "audio": "System audio output"
+  },
+  "blocks": [
+    {
+      "id": "block_1",
+      "type": "set-variable",
+      "inputs": {
+        "name": "counter",
+        "value": "0"
+      },
+      "description": "Initialize counter variable"
+    },
+    {
+      "id": "block_2", 
+      "type": "i2c-scan",
+      "inputs": {},
+      "description": "Scan for I2C devices"
+    },
+    {
+      "id": "block_3",
+      "type": "play-tone",
+      "inputs": {
+        "frequency": "1000",
+        "duration": "0.5"
+      },
+      "description": "Startup sound"
+    },
+    {
+      "id": "block_4",
+      "type": "repeat",
+      "inputs": {
+        "times": "5"
+      },
+      "children": [
+        {
+          "id": "block_5",
+          "type": "gpio-set",
+          "inputs": {
+            "pin": "18",
+            "value": "1"
+          },
+          "description": "Turn on red LED"
+        },
+        {
+          "id": "block_6",
+          "type": "wait",
+          "inputs": {
+            "seconds": "0.5"
+          },
+          "description": "Wait half second"
+        },
+        {
+          "id": "block_7",
+          "type": "gpio-set",
+          "inputs": {
+            "pin": "18", 
+            "value": "0"
+          },
+          "description": "Turn off red LED"
+        },
+        {
+          "id": "block_8",
+          "type": "gpio-pwm",
+          "inputs": {
+            "pin": "19",
+            "frequency": "1000",
+            "duty_cycle": "50"
+          },
+          "description": "PWM on yellow LED"
+        },
+        {
+          "id": "block_9",
+          "type": "wait",
+          "inputs": {
+            "seconds": "0.5"
+          },
+          "description": "Wait half second"
+        },
+        {
+          "id": "block_10",
+          "type": "gpio-set",
+          "inputs": {
+            "pin": "19",
+            "value": "0"
+          },
+          "description": "Turn off yellow LED"
+        }
+      ],
+      "description": "Blink sequence 5 times"
+    },
+    {
+      "id": "block_11",
+      "type": "while",
+      "inputs": {
+        "condition": "counter < 3"
+      },
+      "children": [
+        {
+          "id": "block_12",
+          "type": "gpio-read",
+          "inputs": {
+            "pin": "21"
+          },
+          "output_variable": "button_state",
+          "description": "Read button state"
+        },
+        {
+          "id": "block_13",
+          "type": "if",
+          "inputs": {
+            "condition": "button_state == 1"
+          },
+          "children": [
+            {
+              "id": "block_14",
+              "type": "get-variable",
+              "inputs": {
+                "name": "counter"
+              },
+              "output_variable": "current_counter",
+              "description": "Get current counter value"
+            },
+            {
+              "id": "block_15",
+              "type": "set-variable",
+              "inputs": {
+                "name": "counter",
+                "value": "current_counter + 1"
+              },
+              "description": "Increment counter"
+            },
+            {
+              "id": "block_16",
+              "type": "beep-pattern",
+              "inputs": {
+                "pattern": "single"
+              },
+              "description": "Single beep for button press"
+            },
+            {
+              "id": "block_17",
+              "type": "gpio-set",
+              "inputs": {
+                "pin": "20",
+                "value": "1"
+              },
+              "description": "Turn on green LED"
+            },
+            {
+              "id": "block_18",
+              "type": "wait",
+              "inputs": {
+                "seconds": "1"
+              },
+              "description": "Wait 1 second"
+            },
+            {
+              "id": "block_19",
+              "type": "gpio-set",
+              "inputs": {
+                "pin": "20",
+                "value": "0"
+              },
+              "description": "Turn off green LED"
+            }
+          ],
+          "else_children": [
+            {
+              "id": "block_20",
+              "type": "wait",
+              "inputs": {
+                "seconds": "0.1"
+              },
+              "description": "Short wait when button not pressed"
+            }
+          ],
+          "description": "If button pressed, increment counter and flash green LED"
+        }
+      ],
+      "description": "Wait for button presses (max 3)"
+    },
+    {
+      "id": "block_21",
+      "type": "i2c-read",
+      "inputs": {
+        "device": "48",
+        "register": "0",
+        "length": "2"
+      },
+      "output_variable": "sensor_value",
+      "description": "Read I2C sensor data"
+    },
+    {
+      "id": "block_22",
+      "type": "if",
+      "inputs": {
+        "condition": "sensor_value > 100"
+      },
+      "children": [
+        {
+          "id": "block_23",
+          "type": "beep-pattern",
+          "inputs": {
+            "pattern": "triple"
+          },
+          "description": "Triple beep for high sensor value"
+        },
+        {
+          "id": "block_24",
+          "type": "repeat",
+          "inputs": {
+            "times": "3"
+          },
+          "children": [
+            {
+              "id": "block_25",
+              "type": "gpio-set",
+              "inputs": {
+                "pin": "18",
+                "value": "1"
+              }
+            },
+            {
+              "id": "block_26",
+              "type": "gpio-set",
+              "inputs": {
+                "pin": "19",
+                "value": "1"
+              }
+            },
+            {
+              "id": "block_27",
+              "type": "gpio-set",
+              "inputs": {
+                "pin": "20",
+                "value": "1"
+              }
+            },
+            {
+              "id": "block_28",
+              "type": "wait",
+              "inputs": {
+                "seconds": "0.2"
+              }
+            },
+            {
+              "id": "block_29",
+              "type": "gpio-set",
+              "inputs": {
+                "pin": "18",
+                "value": "0"
+              }
+            },
+            {
+              "id": "block_30",
+              "type": "gpio-set",
+              "inputs": {
+                "pin": "19",
+                "value": "0"
+              }
+            },
+            {
+              "id": "block_31",
+              "type": "gpio-set",
+              "inputs": {
+                "pin": "20",
+                "value": "0"
+              }
+            },
+            {
+              "id": "block_32",
+              "type": "wait",
+              "inputs": {
+                "seconds": "0.2"
+              }
+            }
+          ],
+          "description": "Flash all LEDs 3 times"
+        }
+      ],
+      "else_children": [
+        {
+          "id": "block_33",
+          "type": "beep-pattern",
+          "inputs": {
+            "pattern": "single"
+          },
+          "description": "Single beep for normal sensor value"
+        }
+      ],
+      "description": "React to sensor reading"
+    },
+    {
+      "id": "block_34",
+      "type": "i2c-write",
+      "inputs": {
+        "device": "48",
+        "register": "1",
+        "data": "[0x00, 0x01]"
+      },
+      "description": "Write configuration to I2C device"
+    },
+    {
+      "id": "block_35",
+      "type": "play-tone",
+      "inputs": {
+        "frequency": "2000",
+        "duration": "1.0"
+      },
+      "description": "Completion sound"
+    }
+  ],
+  "notes": [
+    "This project demonstrates all available block types:",
+    "- GPIO Set/Read/PWM blocks",
+    "- I2C Scan/Read/Write blocks", 
+    "- Control blocks: Repeat, While, If/Else",
+    "- Variable blocks: Set/Get Variable",
+    "- Audio blocks: Play Tone, Beep Pattern",
+    "- Wait/Delay blocks",
+    "",
+    "Hardware setup:",
+    "- Connect LEDs to GPIO pins 18 (red), 19 (yellow), 20 (green)",
+    "- Connect button to GPIO pin 21",
+    "- Connect I2C sensor to address 0x48",
+    "- Ensure audio output is available",
+    "",
+    "Program flow:",
+    "1. Initialize variables and scan I2C",
+    "2. Play startup sound",
+    "3. Blink LEDs in sequence 5 times",
+    "4. Wait for up to 3 button presses",
+    "5. Read sensor and react accordingly",
+    "6. Write to I2C device",
+    "7. Play completion sound"
+  ]
+}

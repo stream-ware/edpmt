@@ -1,0 +1,241 @@
+{
+  "name": "Smart Doorbell System",
+  "description": "Interactive doorbell with melody, lighting, and visitor counting",
+  "author": "EDPMT Visual Programming",
+  "version": "1.0",
+  "hardware_requirements": [
+    "Doorbell button on GPIO pin 21",
+    "Entrance light on GPIO pin 18",
+    "Doorbell speaker (audio output)",
+    "Visitor counter display (optional I2C)"
+  ],
+  "connections": {
+    "doorbell_button": "GPIO pin 21",
+    "entrance_light": "GPIO pin 18",
+    "speaker": "System audio output",
+    "display": "I2C address 0x3C (optional)"
+  },
+  "blocks": [
+    {
+      "id": "block_1",
+      "type": "set-variable",
+      "inputs": {
+        "name": "visitor_count",
+        "value": "0"
+      },
+      "description": "Initialize visitor counter"
+    },
+    {
+      "id": "block_2",
+      "type": "set-variable",
+      "inputs": {
+        "name": "last_press_time",
+        "value": "0"
+      },
+      "description": "Debounce timer"
+    },
+    {
+      "id": "block_3",
+      "type": "beep-pattern",
+      "inputs": {
+        "pattern": "single"
+      },
+      "description": "System ready signal"
+    },
+    {
+      "id": "block_4",
+      "type": "while",
+      "inputs": {
+        "condition": "true"
+      },
+      "children": [
+        {
+          "id": "block_5",
+          "type": "gpio-read",
+          "inputs": {
+            "pin": "21"
+          },
+          "output_variable": "button_pressed",
+          "description": "Read doorbell button"
+        },
+        {
+          "id": "block_6",
+          "type": "if",
+          "inputs": {
+            "condition": "button_pressed == 1"
+          },
+          "children": [
+            {
+              "id": "block_7",
+              "type": "get-variable",
+              "inputs": {
+                "name": "visitor_count"
+              },
+              "output_variable": "current_visitors",
+              "description": "Get current visitor count"
+            },
+            {
+              "id": "block_8",
+              "type": "set-variable",
+              "inputs": {
+                "name": "visitor_count",
+                "value": "current_visitors + 1"
+              },
+              "description": "Increment visitor counter"
+            },
+            {
+              "id": "block_9",
+              "type": "gpio-set",
+              "inputs": {
+                "pin": "18",
+                "value": "1"
+              },
+              "description": "Turn on entrance light"
+            },
+            {
+              "id": "block_10",
+              "type": "play-tone",
+              "inputs": {
+                "frequency": "523",
+                "duration": "0.5"
+              },
+              "description": "Doorbell note C"
+            },
+            {
+              "id": "block_11",
+              "type": "play-tone",
+              "inputs": {
+                "frequency": "659",
+                "duration": "0.5"
+              },
+              "description": "Doorbell note E"
+            },
+            {
+              "id": "block_12",
+              "type": "play-tone",
+              "inputs": {
+                "frequency": "784",
+                "duration": "0.5"
+              },
+              "description": "Doorbell note G"
+            },
+            {
+              "id": "block_13",
+              "type": "play-tone",
+              "inputs": {
+                "frequency": "1047",
+                "duration": "1.0"
+              },
+              "description": "Doorbell note high C"
+            },
+            {
+              "id": "block_14",
+              "type": "if",
+              "inputs": {
+                "condition": "current_visitors > 3"
+              },
+              "children": [
+                {
+                  "id": "block_15",
+                  "type": "beep-pattern",
+                  "inputs": {
+                    "pattern": "triple"
+                  },
+                  "description": "Multiple visitor alert"
+                },
+                {
+                  "id": "block_16",
+                  "type": "repeat",
+                  "inputs": {
+                    "times": "3"
+                  },
+                  "children": [
+                    {
+                      "id": "block_17",
+                      "type": "gpio-set",
+                      "inputs": {
+                        "pin": "18",
+                        "value": "0"
+                      }
+                    },
+                    {
+                      "id": "block_18",
+                      "type": "wait",
+                      "inputs": {
+                        "seconds": "0.2"
+                      }
+                    },
+                    {
+                      "id": "block_19",
+                      "type": "gpio-set",
+                      "inputs": {
+                        "pin": "18",
+                        "value": "1"
+                      }
+                    },
+                    {
+                      "id": "block_20",
+                      "type": "wait",
+                      "inputs": {
+                        "seconds": "0.2"
+                      }
+                    }
+                  ],
+                  "description": "Flash entrance light"
+                }
+              ],
+              "description": "Special handling for multiple visitors"
+            },
+            {
+              "id": "block_21",
+              "type": "wait",
+              "inputs": {
+                "seconds": "5"
+              },
+              "description": "Keep light on for 5 seconds"
+            },
+            {
+              "id": "block_22",
+              "type": "gpio-set",
+              "inputs": {
+                "pin": "18",
+                "value": "0"
+              },
+              "description": "Turn off entrance light"
+            },
+            {
+              "id": "block_23",
+              "type": "wait",
+              "inputs": {
+                "seconds": "2"
+              },
+              "description": "Debounce delay"
+            }
+          ],
+          "else_children": [
+            {
+              "id": "block_24",
+              "type": "wait",
+              "inputs": {
+                "seconds": "0.1"
+              },
+              "description": "Normal polling interval"
+            }
+          ],
+          "description": "Handle doorbell press"
+        }
+      ],
+      "description": "Main doorbell monitoring loop"
+    }
+  ],
+  "notes": [
+    "Smart doorbell system with musical chimes",
+    "Plays 4-note ascending melody (C-E-G-C)",
+    "Entrance light activates for 5 seconds",
+    "Visitor counter tracks daily visits",
+    "Special alert for multiple visitors (>3)",
+    "Debounce prevents multiple triggers",
+    "Connect button to GPIO pin 21",
+    "Connect entrance light to GPIO pin 18"
+  ]
+}

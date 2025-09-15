@@ -31,16 +31,43 @@ class VisualProgramming {
             btn.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
         });
         
+        // Palette tab switching
+        document.querySelectorAll('.palette-tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => this.switchPaletteTab(e.target.dataset.tab));
+        });
+        
         // Template buttons
         document.querySelectorAll('.template-btn').forEach(btn => {
             btn.addEventListener('click', (e) => this.loadTemplate(e.target.dataset.template));
         });
+        
+        // Canvas event delegation for delete buttons
+        this.canvas.addEventListener('click', (e) => {
+            if (e.target.classList.contains('delete-btn')) {
+                const blockId = e.target.closest('.canvas-block').dataset.blockId;
+                this.removeBlock(blockId);
+            }
+        });
+        
+        // UI Tests
+        const runUITestsBtn = document.getElementById('runUITests');
+        if (runUITestsBtn) {
+            runUITestsBtn.addEventListener('click', () => this.runUITests());
+        }
+        
+        const runAllTestsBtn = document.getElementById('runAllTests');
+        if (runAllTestsBtn) {
+            runAllTestsBtn.addEventListener('click', () => this.runAllTests());
+        }
         
         // Connection modal
         document.getElementById('connectBtn').addEventListener('click', () => this.connectToServer());
         document.querySelector('.close').addEventListener('click', () => {
             document.getElementById('connectionModal').style.display = 'none';
         });
+        
+        // Initialize dynamic loading
+        this.initializeDynamicLoading();
     }
 
     initializeDragAndDrop() {
@@ -87,7 +114,7 @@ class VisualProgramming {
         blockElement.dataset.blockId = blockId;
         blockElement.dataset.type = blockData.type;
         blockElement.innerHTML = blockData.html.replace('<div class="block', '<div class="block-content') + 
-            `<button class="delete-btn" onclick="visualProgramming.removeBlock('${blockId}')">×</button>`;
+            `<button class="delete-btn">×</button>`;
         
         this.canvas.appendChild(blockElement);
         this.updateGeneratedCode();
@@ -528,7 +555,98 @@ class VisualProgramming {
         this.consoleOutput.textContent += `[${timestamp}] ${message}\n`;
         this.consoleOutput.scrollTop = this.consoleOutput.scrollHeight;
     }
+
+    switchPaletteTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.palette-tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        
+        // Update tab content
+        document.querySelectorAll('.palette-tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        document.getElementById(tabName).classList.add('active');
+        
+        this.log(`📂 Switched to ${tabName} tab`);
+    }
+
+    async initializeDynamicLoading() {
+        try {
+            // Import and initialize ProjectLoader
+            const ProjectLoader = (await import('./project-loader.js')).default;
+            this.projectLoader = new ProjectLoader();
+            
+            // Load projects and templates
+            await this.projectLoader.loadProjects();
+            await this.projectLoader.loadTemplates();
+            
+            // Import and initialize BlockRenderer
+            const BlockRenderer = (await import('./block-renderer.js')).default;
+            this.blockRenderer = new BlockRenderer();
+            
+            // Import UITests
+            const UITests = (await import('./ui-tests.js')).default;
+            this.uiTests = new UITests();
+            
+            this.log('🎉 All modules loaded successfully');
+        } catch (error) {
+            console.error('Error loading modules:', error);
+            this.log(`❌ Error loading modules: ${error.message}`);
+        }
+    }
+
+    async runUITests() {
+        this.switchTab('tests');
+        const testResults = document.getElementById('test-results');
+        testResults.innerHTML = '<div class="test-result running">Running UI tests...</div>';
+        
+        try {
+            if (this.uiTests) {
+                const results = await this.uiTests.runAllTests();
+                this.displayTestResults(results);
+            } else {
+                testResults.innerHTML = '<div class="test-result failed">UI Tests module not loaded</div>';
+            }
+        } catch (error) {
+            testResults.innerHTML = `<div class="test-result failed">Test error: ${error.message}</div>`;
+        }
+    }
+
+    async runAllTests() {
+        await this.runUITests();
+        // Add more test suites here in the future
+        this.log('🧪 All tests completed');
+    }
+
+    displayTestResults(results) {
+        const testResults = document.getElementById('test-results');
+        let html = '';
+        
+        Object.keys(results).forEach(testName => {
+            const result = results[testName];
+            const status = result.passed ? 'passed' : 'failed';
+            html += `<div class="test-result ${status}">`;
+            html += `<strong>${testName}:</strong> ${result.message}`;
+            if (result.details) {
+                html += `<br><small>${result.details}</small>`;
+            }
+            html += '</div>';
+        });
+        
+        testResults.innerHTML = html;
+    }
 }
 
-// Initialize the visual programming interface
-const visualProgramming = new VisualProgramming();
+// Initialize when DOM is loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.visualProgramming = new VisualProgramming();
+    });
+} else {
+    window.visualProgramming = new VisualProgramming();
+}
+
+// Export for ES6 module compatibility
+export default VisualProgramming;

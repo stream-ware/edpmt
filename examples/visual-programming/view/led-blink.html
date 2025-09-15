@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LED Blink - EDPMT Visual Blocks</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .standalone-container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            background: rgba(255,255,255,0.95);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .standalone-header { 
+            text-align: center; 
+            margin-bottom: 30px; 
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+        }
+        .project-visualization { margin: 20px 0; }
+        .project-header { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .block-item { margin: 15px 0; border: 2px solid #ddd; border-radius: 8px; background: white; border-left-width: 5px; transition: all 0.3s ease; }
+        .block-item:hover { transform: translateX(5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .block-header { padding: 15px; color: white; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .block-content { padding: 15px; }
+        .block-inputs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+        .input-item { background: #f0f0f0; padding: 5px 10px; border-radius: 4px; font-size: 0.9em; }
+        .input-key { font-weight: bold; color: #555; }
+        .input-value { color: #333; margin-left: 5px; }
+        .block-description { font-style: italic; color: #666; margin-top: 10px; }
+        .block-children { margin-left: 20px; border-left: 2px dashed #ccc; padding-left: 15px; margin-top: 15px; }
+        .children-label { font-weight: bold; color: #555; margin-bottom: 10px; cursor: pointer; }
+        .block-connector { text-align: center; margin: 5px 0; }
+        .connector-line { width: 2px; height: 20px; background: #ccc; margin: 0 auto; }
+        .connector-arrow { color: #ccc; font-size: 12px; }
+        .project-footer { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <div class="standalone-container">
+        <header class="standalone-header">
+            <h1>🎨 EDPMT Visual Programming</h1>
+            <p>Project Visualization: LED Blink</p>
+        </header>
+        <main>
+            <div class="project-visualization">
+                <div class="project-header">
+                    <h2>💡 LED Blink</h2>
+                    <p class="project-description">Classic LED blinking example - demonstrates basic GPIO control and timing</p>
+                    <div class="project-meta">
+                        <span class="author">👤 EDPMT Visual Programming</span>
+                        <span class="version">📦 v1.0</span>
+                    </div>
+                </div>
+                <div class="block-flow">
+                    <!-- Repeat Block -->
+                    <div class="block-item" style="border-left-color: #FF5722;">
+                        <div class="block-header" style="background-color: #FF5722;">
+                            <span class="block-icon">🔄</span>
+                            <span class="block-type">Repeat</span>
+                            <span class="block-id">#block_1</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">times:</span>
+                                    <span class="input-value">10</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 Blink LED 10 times</div>
+                        </div>
+                        
+                        <div class="block-children">
+                            <div class="children-label">Contains 4 blocks:</div>
+                            
+                            <!-- GPIO Set HIGH -->
+                            <div class="block-item" style="border-left-color: #4CAF50;">
+                                <div class="block-header" style="background-color: #4CAF50;">
+                                    <span class="block-icon">📍</span>
+                                    <span class="block-type">GPIO Set</span>
+                                    <span class="block-id">#block_2</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-inputs">
+                                        <div class="input-item">
+                                            <span class="input-key">pin:</span>
+                                            <span class="input-value">18</span>
+                                        </div>
+                                        <div class="input-item">
+                                            <span class="input-key">value:</span>
+                                            <span class="input-value">1</span>
+                                        </div>
+                                    </div>
+                                    <div class="block-description">💬 Turn LED ON</div>
+                                </div>
+                            </div>
+
+                            <div class="block-connector">
+                                <div class="connector-line"></div>
+                                <div class="connector-arrow">▼</div>
+                            </div>
+
+                            <!-- Wait 1 second -->
+                            <div class="block-item" style="border-left-color: #607D8B;">
+                                <div class="block-header" style="background-color: #607D8B;">
+                                    <span class="block-icon">⏰</span>
+                                    <span class="block-type">Wait</span>
+                                    <span class="block-id">#block_3</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-inputs">
+                                        <div class="input-item">
+                                            <span class="input-key">seconds:</span>
+                                            <span class="input-value">1</span>
+                                        </div>
+                                    </div>
+                                    <div class="block-description">💬 Wait 1 second</div>
+                                </div>
+                            </div>
+
+                            <div class="block-connector">
+                                <div class="connector-line"></div>
+                                <div class="connector-arrow">▼</div>
+                            </div>
+
+                            <!-- GPIO Set LOW -->
+                            <div class="block-item" style="border-left-color: #4CAF50;">
+                                <div class="block-header" style="background-color: #4CAF50;">
+                                    <span class="block-icon">📍</span>
+                                    <span class="block-type">GPIO Set</span>
+                                    <span class="block-id">#block_4</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-inputs">
+                                        <div class="input-item">
+                                            <span class="input-key">pin:</span>
+                                            <span class="input-value">18</span>
+                                        </div>
+                                        <div class="input-item">
+                                            <span class="input-key">value:</span>
+                                            <span class="input-value">0</span>
+                                        </div>
+                                    </div>
+                                    <div class="block-description">💬 Turn LED OFF</div>
+                                </div>
+                            </div>
+
+                            <div class="block-connector">
+                                <div class="connector-line"></div>
+                                <div class="connector-arrow">▼</div>
+                            </div>
+
+                            <!-- Wait 1 second -->
+                            <div class="block-item" style="border-left-color: #607D8B;">
+                                <div class="block-header" style="background-color: #607D8B;">
+                                    <span class="block-icon">⏰</span>
+                                    <span class="block-type">Wait</span>
+                                    <span class="block-id">#block_5</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-inputs">
+                                        <div class="input-item">
+                                            <span class="input-key">seconds:</span>
+                                            <span class="input-value">1</span>
+                                        </div>
+                                    </div>
+                                    <div class="block-description">💬 Wait 1 second</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-footer">
+                    <div class="hardware-requirements">
+                        <h4>🔧 Hardware Requirements:</h4>
+                        <ul>
+                            <li>LED connected to GPIO pin 18</li>
+                            <li>220Ω resistor</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="connections">
+                        <h4>🔌 Connections:</h4>
+                        <ul>
+                            <li><strong>led:</strong> GPIO pin 18</li>
+                        </ul>
+                    </div>
+
+                    <div class="project-notes">
+                        <h4>📝 Notes:</h4>
+                        <ul>
+                            <li>This is the classic 'Hello World' of hardware programming</li>
+                            <li>Connect an LED with 220Ω resistor to GPIO pin 18</li>
+                            <li>LED will blink on and off every second, 10 times total</li>
+                            <li>Great starting project for beginners</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        document.querySelectorAll('.children-label').forEach(label => {
+            label.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const section = this.parentElement;
+                section.classList.toggle('collapsed');
+                
+                const content = Array.from(section.children).slice(1);
+                content.forEach(el => {
+                    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

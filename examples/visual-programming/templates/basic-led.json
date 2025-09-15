@@ -1,0 +1,29 @@
+{
+  "name": "Basic LED Template",
+  "description": "Simple LED control template",
+  "blocks": [
+    {
+      "id": "block_1",
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "18",
+        "value": "1"
+      }
+    },
+    {
+      "id": "block_2",
+      "type": "wait",
+      "inputs": {
+        "seconds": "1"
+      }
+    },
+    {
+      "id": "block_3",
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "18",
+        "value": "0"
+      }
+    }
+  ]
+}

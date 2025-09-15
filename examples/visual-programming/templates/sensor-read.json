@@ -1,0 +1,27 @@
+{
+  "name": "Sensor Read Template", 
+  "description": "Basic I2C sensor reading template",
+  "blocks": [
+    {
+      "id": "block_1",
+      "type": "i2c-scan",
+      "inputs": {}
+    },
+    {
+      "id": "block_2", 
+      "type": "i2c-read",
+      "inputs": {
+        "device": "48",
+        "register": "0",
+        "length": "2"
+      }
+    },
+    {
+      "id": "block_3",
+      "type": "beep-pattern",
+      "inputs": {
+        "pattern": "single"
+      }
+    }
+  ]
+}

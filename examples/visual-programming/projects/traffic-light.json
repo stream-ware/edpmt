@@ -1,0 +1,255 @@
+{
+  "name": "Traffic Light Controller",
+  "description": "3-phase traffic light sequence with realistic timing",
+  "author": "EDPMT Visual Programming",
+  "version": "1.0",
+  "hardware_requirements": [
+    "Red LED on GPIO pin 18",
+    "Yellow LED on GPIO pin 19", 
+    "Green LED on GPIO pin 20",
+    "Audio output for pedestrian signals"
+  ],
+  "connections": {
+    "red_led": "GPIO pin 18",
+    "yellow_led": "GPIO pin 19",
+    "green_led": "GPIO pin 20",
+    "audio": "System audio output"
+  },
+  "blocks": [
+    {
+      "id": "block_1",
+      "type": "set-variable",
+      "inputs": {
+        "name": "cycle_count",
+        "value": "0"
+      },
+      "description": "Initialize cycle counter"
+    },
+    {
+      "id": "block_2",
+      "type": "beep-pattern",
+      "inputs": {
+        "pattern": "double"
+      },
+      "description": "System startup sound"
+    },
+    {
+      "id": "block_3",
+      "type": "repeat",
+      "inputs": {
+        "times": "5"
+      },
+      "children": [
+        {
+          "id": "block_4",
+          "type": "gpio-set",
+          "inputs": {
+            "pin": "18",
+            "value": "1"
+          },
+          "description": "Turn on RED light"
+        },
+        {
+          "id": "block_5",
+          "type": "gpio-set",
+          "inputs": {
+            "pin": "19",
+            "value": "0"
+          },
+          "description": "Turn off YELLOW light"
+        },
+        {
+          "id": "block_6",
+          "type": "gpio-set",
+          "inputs": {
+            "pin": "20",
+            "value": "0"
+          },
+          "description": "Turn off GREEN light"
+        },
+        {
+          "id": "block_7",
+          "type": "play-tone",
+          "inputs": {
+            "frequency": "800",
+            "duration": "0.3"
+          },
+          "description": "Red light alert tone"
+        },
+        {
+          "id": "block_8",
+          "type": "wait",
+          "inputs": {
+            "seconds": "5"
+          },
+          "description": "Red phase - 5 seconds"
+        },
+        {
+          "id": "block_9",
+          "type": "gpio-set",
+          "inputs": {
+            "pin": "19",
+            "value": "1"
+          },
+          "description": "Turn on YELLOW light (with red)"
+        },
+        {
+          "id": "block_10",
+          "type": "beep-pattern",
+          "inputs": {
+            "pattern": "single"
+          },
+          "description": "Prepare to go signal"
+        },
+        {
+          "id": "block_11",
+          "type": "wait",
+          "inputs": {
+            "seconds": "2"
+          },
+          "description": "Red+Yellow phase - 2 seconds"
+        },
+        {
+          "id": "block_12",
+          "type": "gpio-set",
+          "inputs": {
+            "pin": "18",
+            "value": "0"
+          },
+          "description": "Turn off RED light"
+        },
+        {
+          "id": "block_13",
+          "type": "gpio-set",
+          "inputs": {
+            "pin": "19",
+            "value": "0"
+          },
+          "description": "Turn off YELLOW light"
+        },
+        {
+          "id": "block_14",
+          "type": "gpio-set",
+          "inputs": {
+            "pin": "20",
+            "value": "1"
+          },
+          "description": "Turn on GREEN light"
+        },
+        {
+          "id": "block_15",
+          "type": "play-tone",
+          "inputs": {
+            "frequency": "1200",
+            "duration": "0.3"
+          },
+          "description": "Green light go tone"
+        },
+        {
+          "id": "block_16",
+          "type": "wait",
+          "inputs": {
+            "seconds": "5"
+          },
+          "description": "Green phase - 5 seconds"
+        },
+        {
+          "id": "block_17",
+          "type": "gpio-set",
+          "inputs": {
+            "pin": "20",
+            "value": "0"
+          },
+          "description": "Turn off GREEN light"
+        },
+        {
+          "id": "block_18",
+          "type": "gpio-set",
+          "inputs": {
+            "pin": "19",
+            "value": "1"
+          },
+          "description": "Turn on YELLOW light"
+        },
+        {
+          "id": "block_19",
+          "type": "beep-pattern",
+          "inputs": {
+            "pattern": "triple"
+          },
+          "description": "Caution signal"
+        },
+        {
+          "id": "block_20",
+          "type": "wait",
+          "inputs": {
+            "seconds": "2"
+          },
+          "description": "Yellow phase - 2 seconds"
+        },
+        {
+          "id": "block_21",
+          "type": "get-variable",
+          "inputs": {
+            "name": "cycle_count"
+          },
+          "output_variable": "current_count",
+          "description": "Get current cycle count"
+        },
+        {
+          "id": "block_22",
+          "type": "set-variable",
+          "inputs": {
+            "name": "cycle_count",
+            "value": "current_count + 1"
+          },
+          "description": "Increment cycle counter"
+        }
+      ],
+      "description": "Traffic light cycle sequence"
+    },
+    {
+      "id": "block_23",
+      "type": "beep-pattern",
+      "inputs": {
+        "pattern": "SOS"
+      },
+      "description": "End of program signal"
+    },
+    {
+      "id": "block_24",
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "18",
+        "value": "0"
+      },
+      "description": "Turn off all lights"
+    },
+    {
+      "id": "block_25",
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "19",
+        "value": "0"
+      },
+      "description": "Turn off all lights"
+    },
+    {
+      "id": "block_26",
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "20",
+        "value": "0"
+      },
+      "description": "Turn off all lights"
+    }
+  ],
+  "notes": [
+    "Simulates a realistic traffic light controller",
+    "Complete cycle: Red (5s) → Red+Yellow (2s) → Green (5s) → Yellow (2s)",
+    "Audio feedback for each phase transition",
+    "Cycle counter tracks number of completed cycles",
+    "Runs 5 complete cycles then stops",
+    "LED connections: Pin 18=Red, Pin 19=Yellow, Pin 20=Green"
+  ]
+}

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Light Controller - EDPMT Visual Blocks</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .standalone-container { max-width: 1200px; margin: 0 auto; background: rgba(255,255,255,0.95); border-radius: 10px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .standalone-header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee; }
+        .project-visualization { margin: 20px 0; }
+        .project-header { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .block-item { margin: 15px 0; border: 2px solid #ddd; border-radius: 8px; background: white; border-left-width: 5px; transition: all 0.3s ease; }
+        .block-item:hover { transform: translateX(5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .block-header { padding: 15px; color: white; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .block-content { padding: 15px; }
+        .block-inputs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+        .input-item { background: #f0f0f0; padding: 5px 10px; border-radius: 4px; font-size: 0.9em; }
+        .input-key { font-weight: bold; color: #555; }
+        .input-value { color: #333; margin-left: 5px; }
+        .block-description { font-style: italic; color: #666; margin-top: 10px; }
+        .block-children { margin-left: 20px; border-left: 2px dashed #ccc; padding-left: 15px; margin-top: 15px; }
+        .children-label { font-weight: bold; color: #555; margin-bottom: 10px; cursor: pointer; }
+        .block-connector { text-align: center; margin: 5px 0; }
+        .connector-line { width: 2px; height: 20px; background: #ccc; margin: 0 auto; }
+        .connector-arrow { color: #ccc; font-size: 12px; }
+        .project-footer { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
+        .traffic-light-demo { display: flex; justify-content: center; margin: 20px 0; }
+        .traffic-light { width: 80px; height: 200px; background: #333; border-radius: 10px; padding: 10px; }
+        .light { width: 60px; height: 60px; border-radius: 50%; margin: 5px 0; border: 3px solid #555; }
+        .red { background: #ff4444; }
+        .yellow { background: #ffff44; }
+        .green { background: #44ff44; }
+        .light.off { background: #222; }
+    </style>
+</head>
+<body>
+    <div class="standalone-container">
+        <header class="standalone-header">
+            <h1>🎨 EDPMT Visual Programming</h1>
+            <p>Project Visualization: Traffic Light Controller</p>
+        </header>
+        <main>
+            <div class="project-visualization">
+                <div class="project-header">
+                    <h2>🚦 Traffic Light Controller</h2>
+                    <p class="project-description">3-phase traffic light sequence with realistic timing</p>
+                    <div class="project-meta">
+                        <span class="author">👤 EDPMT Visual Programming</span>
+                        <span class="version">📦 v1.0</span>
+                    </div>
+                </div>
+
+                <!-- Interactive Traffic Light Demo -->
+                <div class="traffic-light-demo">
+                    <div class="traffic-light">
+                        <div class="light red" id="red-light"></div>
+                        <div class="light yellow off" id="yellow-light"></div>
+                        <div class="light green off" id="green-light"></div>
+                    </div>
+                </div>
+
+                <div class="block-flow">
+                    <!-- Initialize Variables -->
+                    <div class="block-item" style="border-left-color: #FFC107;">
+                        <div class="block-header" style="background-color: #FFC107;">
+                            <span class="block-icon">💾</span>
+                            <span class="block-type">Set Variable</span>
+                            <span class="block-id">#block_1</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">name:</span>
+                                    <span class="input-value">cycle_count</span>
+                                </div>
+                                <div class="input-item">
+                                    <span class="input-key">value:</span>
+                                    <span class="input-value">0</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 Initialize cycle counter</div>
+                        </div>
+                    </div>
+
+                    <div class="block-connector">
+                        <div class="connector-line"></div>
+                        <div class="connector-arrow">▼</div>
+                    </div>
+
+                    <!-- Startup Sound -->
+                    <div class="block-item" style="border-left-color: #009688;">
+                        <div class="block-header" style="background-color: #009688;">
+                            <span class="block-icon">🔊</span>
+                            <span class="block-type">Beep Pattern</span>
+                            <span class="block-id">#block_2</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">pattern:</span>
+                                    <span class="input-value">double</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 System startup sound</div>
+                        </div>
+                    </div>
+
+                    <div class="block-connector">
+                        <div class="connector-line"></div>
+                        <div class="connector-arrow">▼</div>
+                    </div>
+
+                    <!-- Main Repeat Loop -->
+                    <div class="block-item" style="border-left-color: #FF5722;">
+                        <div class="block-header" style="background-color: #FF5722;">
+                            <span class="block-icon">🔄</span>
+                            <span class="block-type">Repeat</span>
+                            <span class="block-id">#block_3</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">times:</span>
+                                    <span class="input-value">5</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 Traffic light cycle sequence</div>
+                        </div>
+                        
+                        <div class="block-children">
+                            <div class="children-label">Traffic Light Sequence (Click to expand):</div>
+                            
+                            <!-- RED Phase -->
+                            <div class="block-item" style="border-left-color: #4CAF50;">
+                                <div class="block-header" style="background-color: #f44336;">
+                                    <span class="block-icon">🔴</span>
+                                    <span class="block-type">RED PHASE</span>
+                                    <span class="block-id">#red_phase</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-description">💬 Turn on RED light, turn off others, wait 5 seconds</div>
+                                </div>
+                            </div>
+
+                            <div class="block-connector">
+                                <div class="connector-line"></div>
+                                <div class="connector-arrow">▼</div>
+                            </div>
+
+                            <!-- RED + YELLOW Phase -->
+                            <div class="block-item" style="border-left-color: #FF9800;">
+                                <div class="block-header" style="background-color: #ff9800;">
+                                    <span class="block-icon">🔴🟡</span>
+                                    <span class="block-type">RED + YELLOW PHASE</span>
+                                    <span class="block-id">#red_yellow_phase</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-description">💬 Turn on YELLOW with RED, prepare-to-go signal, wait 2 seconds</div>
+                                </div>
+                            </div>
+
+                            <div class="block-connector">
+                                <div class="connector-line"></div>
+                                <div class="connector-arrow">▼</div>
+                            </div>
+
+                            <!-- GREEN Phase -->
+                            <div class="block-item" style="border-left-color: #4CAF50;">
+                                <div class="block-header" style="background-color: #4caf50;">
+                                    <span class="block-icon">🟢</span>
+                                    <span class="block-type">GREEN PHASE</span>
+                                    <span class="block-id">#green_phase</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-description">💬 Turn on GREEN light, turn off others, go tone, wait 5 seconds</div>
+                                </div>
+                            </div>
+
+                            <div class="block-connector">
+                                <div class="connector-line"></div>
+                                <div class="connector-arrow">▼</div>
+                            </div>
+
+                            <!-- YELLOW Phase -->
+                            <div class="block-item" style="border-left-color: #FF9800;">
+                                <div class="block-header" style="background-color: #ffc107;">
+                                    <span class="block-icon">🟡</span>
+                                    <span class="block-type">YELLOW PHASE</span>
+                                    <span class="block-id">#yellow_phase</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-description">💬 Turn on YELLOW light, caution signal, wait 2 seconds</div>
+                                </div>
+                            </div>
+
+                            <div class="block-connector">
+                                <div class="connector-line"></div>
+                                <div class="connector-arrow">▼</div>
+                            </div>
+
+                            <!-- Cycle Counter -->
+                            <div class="block-item" style="border-left-color: #FFEB3B;">
+                                <div class="block-header" style="background-color: #FFEB3B; color: #333;">
+                                    <span class="block-icon">📈</span>
+                                    <span class="block-type">Increment Counter</span>
+                                    <span class="block-id">#increment</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-description">💬 Increment cycle counter</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="block-connector">
+                        <div class="connector-line"></div>
+                        <div class="connector-arrow">▼</div>
+                    </div>
+
+                    <!-- End Sequence -->
+                    <div class="block-item" style="border-left-color: #009688;">
+                        <div class="block-header" style="background-color: #009688;">
+                            <span class="block-icon">🔊</span>
+                            <span class="block-type">Beep Pattern</span>
+                            <span class="block-id">#end</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">pattern:</span>
+                                    <span class="input-value">SOS</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 End of program signal</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-footer">
+                    <div class="hardware-requirements">
+                        <h4>🔧 Hardware Requirements:</h4>
+                        <ul>
+                            <li>Red LED on GPIO pin 18</li>
+                            <li>Yellow LED on GPIO pin 19</li>
+                            <li>Green LED on GPIO pin 20</li>
+                            <li>Audio output for pedestrian signals</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="connections">
+                        <h4>🔌 Connections:</h4>
+                        <ul>
+                            <li><strong>red_led:</strong> GPIO pin 18</li>
+                            <li><strong>yellow_led:</strong> GPIO pin 19</li>
+                            <li><strong>green_led:</strong> GPIO pin 20</li>
+                            <li><strong>audio:</strong> System audio output</li>
+                        </ul>
+                    </div>
+
+                    <div class="project-notes">
+                        <h4>📝 Notes:</h4>
+                        <ul>
+                            <li>Simulates a realistic traffic light controller</li>
+                            <li>Complete cycle: Red (5s) → Red+Yellow (2s) → Green (5s) → Yellow (2s)</li>
+                            <li>Audio feedback for each phase transition</li>
+                            <li>Cycle counter tracks number of completed cycles</li>
+                            <li>Runs 5 complete cycles then stops</li>
+                            <li>LED connections: Pin 18=Red, Pin 19=Yellow, Pin 20=Green</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        // Interactive traffic light demo
+        let currentPhase = 0;
+        const phases = ['red', 'red-yellow', 'green', 'yellow'];
+        
+        function updateTrafficLight() {
+            // Reset all lights
+            document.getElementById('red-light').className = 'light red off';
+            document.getElementById('yellow-light').className = 'light yellow off';
+            document.getElementById('green-light').className = 'light green off';
+            
+            // Set current phase
+            switch(phases[currentPhase]) {
+                case 'red':
+                    document.getElementById('red-light').className = 'light red';
+                    break;
+                case 'red-yellow':
+                    document.getElementById('red-light').className = 'light red';
+                    document.getElementById('yellow-light').className = 'light yellow';
+                    break;
+                case 'green':
+                    document.getElementById('green-light').className = 'light green';
+                    break;
+                case 'yellow':
+                    document.getElementById('yellow-light').className = 'light yellow';
+                    break;
+            }
+            
+            currentPhase = (currentPhase + 1) % phases.length;
+        }
+        
+        // Start traffic light simulation
+        updateTrafficLight();
+        setInterval(updateTrafficLight, 2000);
+        
+        // Expandable sections
+        document.querySelectorAll('.children-label').forEach(label => {
+            label.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const section = this.parentElement;
+                section.classList.toggle('collapsed');
+                
+                const content = Array.from(section.children).slice(1);
+                content.forEach(el => {
+                    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

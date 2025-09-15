@@ -1,0 +1,65 @@
+{
+  "name": "LED Blink",
+  "description": "Classic LED blinking example - demonstrates basic GPIO control and timing",
+  "author": "EDPMT Visual Programming",
+  "version": "1.0",
+  "hardware_requirements": [
+    "LED connected to GPIO pin 18",
+    "220Ω resistor"
+  ],
+  "connections": {
+    "led": "GPIO pin 18"
+  },
+  "blocks": [
+    {
+      "id": "block_1",
+      "type": "repeat",
+      "inputs": {
+        "times": "10"
+      },
+      "children": [
+        {
+          "id": "block_2",
+          "type": "gpio-set",
+          "inputs": {
+            "pin": "18",
+            "value": "1"
+          },
+          "description": "Turn LED ON"
+        },
+        {
+          "id": "block_3",
+          "type": "wait",
+          "inputs": {
+            "seconds": "1"
+          },
+          "description": "Wait 1 second"
+        },
+        {
+          "id": "block_4",
+          "type": "gpio-set",
+          "inputs": {
+            "pin": "18",
+            "value": "0"
+          },
+          "description": "Turn LED OFF"
+        },
+        {
+          "id": "block_5",
+          "type": "wait",
+          "inputs": {
+            "seconds": "1"
+          },
+          "description": "Wait 1 second"
+        }
+      ],
+      "description": "Blink LED 10 times"
+    }
+  ],
+  "notes": [
+    "This is the classic 'Hello World' of hardware programming",
+    "Connect an LED with 220Ω resistor to GPIO pin 18",
+    "LED will blink on and off every second, 10 times total",
+    "Great starting project for beginners"
+  ]
+}

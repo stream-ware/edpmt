@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sensor Monitor - EDPMT Visual Blocks</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .standalone-container { max-width: 1200px; margin: 0 auto; background: rgba(255,255,255,0.95); border-radius: 10px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .standalone-header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee; }
+        .project-visualization { margin: 20px 0; }
+        .project-header { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .block-item { margin: 15px 0; border: 2px solid #ddd; border-radius: 8px; background: white; border-left-width: 5px; transition: all 0.3s ease; }
+        .block-item:hover { transform: translateX(5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .block-header { padding: 15px; color: white; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .block-content { padding: 15px; }
+        .block-inputs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+        .input-item { background: #f0f0f0; padding: 5px 10px; border-radius: 4px; font-size: 0.9em; }
+        .input-key { font-weight: bold; color: #555; }
+        .input-value { color: #333; margin-left: 5px; }
+        .block-description { font-style: italic; color: #666; margin-top: 10px; }
+        .block-children { margin-left: 20px; border-left: 2px dashed #ccc; padding-left: 15px; margin-top: 15px; }
+        .children-label { font-weight: bold; color: #555; margin-bottom: 10px; cursor: pointer; }
+        .block-connector { text-align: center; margin: 5px 0; }
+        .connector-line { width: 2px; height: 20px; background: #ccc; margin: 0 auto; }
+        .connector-arrow { color: #ccc; font-size: 12px; }
+        .project-footer { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
+        .sensor-dashboard { display: flex; justify-content: center; margin: 20px 0; gap: 20px; }
+        .sensor-widget { background: #fff; border-radius: 8px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center; min-width: 120px; }
+        .sensor-value { font-size: 24px; font-weight: bold; color: #007bff; }
+        .sensor-label { font-size: 12px; color: #666; margin-top: 5px; }
+        .alert-indicator { width: 20px; height: 20px; border-radius: 50%; margin: 10px auto; }
+        .alert-normal { background: #28a745; }
+        .alert-warning { background: #ffc107; }
+        .alert-critical { background: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="standalone-container">
+        <header class="standalone-header">
+            <h1>🎨 EDPMT Visual Programming</h1>
+            <p>Project Visualization: Sensor Monitor</p>
+        </header>
+        <main>
+            <div class="project-visualization">
+                <div class="project-header">
+                    <h2>🌡️ Sensor Monitor</h2>
+                    <p class="project-description">Advanced I2C sensor monitoring with conditional audio alerts</p>
+                    <div class="project-meta">
+                        <span class="author">👤 EDPMT Visual Programming</span>
+                        <span class="version">📦 v1.0</span>
+                    </div>
+                </div>
+
+                <!-- Interactive Sensor Dashboard -->
+                <div class="sensor-dashboard">
+                    <div class="sensor-widget">
+                        <div class="sensor-value" id="temperature">24.5°C</div>
+                        <div class="sensor-label">Temperature</div>
+                        <div class="alert-indicator alert-normal" id="temp-alert"></div>
+                    </div>
+                    <div class="sensor-widget">
+                        <div class="sensor-value" id="humidity">65%</div>
+                        <div class="sensor-label">Humidity</div>
+                        <div class="alert-indicator alert-normal" id="humidity-alert"></div>
+                    </div>
+                    <div class="sensor-widget">
+                        <div class="sensor-value" id="pressure">1013 hPa</div>
+                        <div class="sensor-label">Pressure</div>
+                        <div class="alert-indicator alert-normal" id="pressure-alert"></div>
+                    </div>
+                </div>
+
+                <div class="block-flow">
+                    <!-- Set Variable for Reading Count -->
+                    <div class="block-item" style="border-left-color: #FFC107;">
+                        <div class="block-header" style="background-color: #FFC107;">
+                            <span class="block-icon">💾</span>
+                            <span class="block-type">Set Variable</span>
+                            <span class="block-id">#block_1</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">name:</span>
+                                    <span class="input-value">reading_count</span>
+                                </div>
+                                <div class="input-item">
+                                    <span class="input-key">value:</span>
+                                    <span class="input-value">0</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 Initialize sensor reading counter</div>
+                        </div>
+                    </div>
+
+                    <div class="block-connector">
+                        <div class="connector-line"></div>
+                        <div class="connector-arrow">▼</div>
+                    </div>
+
+                    <!-- Startup Sound -->
+                    <div class="block-item" style="border-left-color: #009688;">
+                        <div class="block-header" style="background-color: #009688;">
+                            <span class="block-icon">🔊</span>
+                            <span class="block-type">Beep Pattern</span>
+                            <span class="block-id">#block_2</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">pattern:</span>
+                                    <span class="input-value">double</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 Sensor monitor startup sound</div>
+                        </div>
+                    </div>
+
+                    <div class="block-connector">
+                        <div class="connector-line"></div>
+                        <div class="connector-arrow">▼</div>
+                    </div>
+
+                    <!-- Main Monitoring Loop -->
+                    <div class="block-item" style="border-left-color: #FF5722;">
+                        <div class="block-header" style="background-color: #FF5722;">
+                            <span class="block-icon">🔄</span>
+                            <span class="block-type">Repeat</span>
+                            <span class="block-id">#block_3</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">times:</span>
+                                    <span class="input-value">20</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 Monitor sensors 20 times</div>
+                        </div>
+                        
+                        <div class="block-children">
+                            <div class="children-label">Sensor Monitoring Sequence (Click to expand):</div>
+                            
+                            <!-- I2C Scan -->
+                            <div class="block-item" style="border-left-color: #6f42c1;">
+                                <div class="block-header" style="background-color: #6f42c1;">
+                                    <span class="block-icon">🔍</span>
+                                    <span class="block-type">I2C Scan</span>
+                                    <span class="block-id">#scan</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-description">💬 Scan for available I2C sensors</div>
+                                </div>
+                            </div>
+
+                            <div class="block-connector">
+                                <div class="connector-line"></div>
+                                <div class="connector-arrow">▼</div>
+                            </div>
+
+                            <!-- Temperature Reading -->
+                            <div class="block-item" style="border-left-color: #6610f2;">
+                                <div class="block-header" style="background-color: #6610f2;">
+                                    <span class="block-icon">📊</span>
+                                    <span class="block-type">I2C Read</span>
+                                    <span class="block-id">#temp_read</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-inputs">
+                                        <div class="input-item">
+                                            <span class="input-key">device:</span>
+                                            <span class="input-value">0x76</span>
+                                        </div>
+                                        <div class="input-item">
+                                            <span class="input-key">register:</span>
+                                            <span class="input-value">0xFA</span>
+                                        </div>
+                                        <div class="input-item">
+                                            <span class="input-key">length:</span>
+                                            <span class="input-value">3</span>
+                                        </div>
+                                    </div>
+                                    <div class="block-description">💬 Read temperature from BME280 sensor</div>
+                                </div>
+                            </div>
+
+                            <div class="block-connector">
+                                <div class="connector-line"></div>
+                                <div class="connector-arrow">▼</div>
+                            </div>
+
+                            <!-- Temperature Check -->
+                            <div class="block-item" style="border-left-color: #dc3545;">
+                                <div class="block-header" style="background-color: #dc3545;">
+                                    <span class="block-icon">🌡️</span>
+                                    <span class="block-type">If Temperature > 30°C</span>
+                                    <span class="block-id">#temp_check</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-description">💬 Check if temperature exceeds threshold</div>
+                                </div>
+                                
+                                <div class="block-children">
+                                    <div class="children-label">Temperature Alert Actions:</div>
+                                    
+                                    <!-- Temperature Alert Sound -->
+                                    <div class="block-item" style="border-left-color: #e83e8c;">
+                                        <div class="block-header" style="background-color: #e83e8c;">
+                                            <span class="block-icon">🚨</span>
+                                            <span class="block-type">Play Tone</span>
+                                            <span class="block-id">#temp_alert</span>
+                                        </div>
+                                        <div class="block-content">
+                                            <div class="block-inputs">
+                                                <div class="input-item">
+                                                    <span class="input-key">frequency:</span>
+                                                    <span class="input-value">1000</span>
+                                                </div>
+                                                <div class="input-item">
+                                                    <span class="input-key">duration:</span>
+                                                    <span class="input-value">0.5</span>
+                                                </div>
+                                            </div>
+                                            <div class="block-description">💬 High temperature alert tone</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Status LED -->
+                                    <div class="block-item" style="border-left-color: #4CAF50;">
+                                        <div class="block-header" style="background-color: #dc3545;">
+                                            <span class="block-icon">🔴</span>
+                                            <span class="block-type">GPIO Set</span>
+                                            <span class="block-id">#warning_led</span>
+                                        </div>
+                                        <div class="block-content">
+                                            <div class="block-inputs">
+                                                <div class="input-item">
+                                                    <span class="input-key">pin:</span>
+                                                    <span class="input-value">18</span>
+                                                </div>
+                                                <div class="input-item">
+                                                    <span class="input-key">value:</span>
+                                                    <span class="input-value">1</span>
+                                                </div>
+                                            </div>
+                                            <div class="block-description">💬 Turn on warning LED</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="block-connector">
+                                <div class="connector-line"></div>
+                                <div class="connector-arrow">▼</div>
+                            </div>
+
+                            <!-- Increment Counter -->
+                            <div class="block-item" style="border-left-color: #FFEB3B;">
+                                <div class="block-header" style="background-color: #FFEB3B; color: #333;">
+                                    <span class="block-icon">📈</span>
+                                    <span class="block-type">Increment Variable</span>
+                                    <span class="block-id">#increment</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-inputs">
+                                        <div class="input-item">
+                                            <span class="input-key">variable:</span>
+                                            <span class="input-value">reading_count</span>
+                                        </div>
+                                    </div>
+                                    <div class="block-description">💬 Increment reading counter</div>
+                                </div>
+                            </div>
+
+                            <div class="block-connector">
+                                <div class="connector-line"></div>
+                                <div class="connector-arrow">▼</div>
+                            </div>
+
+                            <!-- Wait between readings -->
+                            <div class="block-item" style="border-left-color: #607D8B;">
+                                <div class="block-header" style="background-color: #607D8B;">
+                                    <span class="block-icon">⏰</span>
+                                    <span class="block-type">Wait</span>
+                                    <span class="block-id">#wait</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-inputs">
+                                        <div class="input-item">
+                                            <span class="input-key">seconds:</span>
+                                            <span class="input-value">2</span>
+                                        </div>
+                                    </div>
+                                    <div class="block-description">💬 Wait 2 seconds between readings</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="block-connector">
+                        <div class="connector-line"></div>
+                        <div class="connector-arrow">▼</div>
+                    </div>
+
+                    <!-- End Sound -->
+                    <div class="block-item" style="border-left-color: #009688;">
+                        <div class="block-header" style="background-color: #009688;">
+                            <span class="block-icon">🔊</span>
+                            <span class="block-type">Beep Pattern</span>
+                            <span class="block-id">#end_sound</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">pattern:</span>
+                                    <span class="input-value">triple</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 Monitoring complete signal</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-footer">
+                    <div class="hardware-requirements">
+                        <h4>🔧 Hardware Requirements:</h4>
+                        <ul>
+                            <li>BME280 I2C sensor (temperature, humidity, pressure)</li>
+                            <li>Warning LED on GPIO pin 18</li>
+                            <li>Audio output for alerts</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="connections">
+                        <h4>🔌 Connections:</h4>
+                        <ul>
+                            <li><strong>BME280 sensor:</strong> I2C address 0x76</li>
+                            <li><strong>warning_led:</strong> GPIO pin 18</li>
+                            <li><strong>audio:</strong> System audio output</li>
+                        </ul>
+                    </div>
+
+                    <div class="project-notes">
+                        <h4>📝 Notes:</h4>
+                        <ul>
+                            <li>Advanced environmental monitoring with the BME280 sensor</li>
+                            <li>Reads temperature, humidity, and atmospheric pressure</li>
+                            <li>Temperature threshold alert at 30°C with audio and LED warning</li>
+                            <li>Continuous monitoring with 2-second intervals</li>
+                            <li>Perfect for greenhouse, server room, or weather station applications</li>
+                            <li>BME280 is a high-precision sensor commonly used in IoT projects</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        // Simulate sensor data updates
+        function updateSensorData() {
+            const temp = (20 + Math.random() * 15).toFixed(1);
+            const humidity = (50 + Math.random() * 30).toFixed(0);
+            const pressure = (1000 + Math.random() * 50).toFixed(0);
+            
+            document.getElementById('temperature').textContent = temp + '°C';
+            document.getElementById('humidity').textContent = humidity + '%';
+            document.getElementById('pressure').textContent = pressure + ' hPa';
+            
+            // Update alert indicators
+            const tempAlert = document.getElementById('temp-alert');
+            if (temp > 30) {
+                tempAlert.className = 'alert-indicator alert-critical';
+            } else if (temp > 25) {
+                tempAlert.className = 'alert-indicator alert-warning';
+            } else {
+                tempAlert.className = 'alert-indicator alert-normal';
+            }
+        }
+        
+        // Start sensor simulation
+        updateSensorData();
+        setInterval(updateSensorData, 2000);
+        
+        // Expandable sections
+        document.querySelectorAll('.children-label').forEach(label => {
+            label.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const section = this.parentElement;
+                section.classList.toggle('collapsed');
+                
+                const content = Array.from(section.children).slice(1);
+                content.forEach(el => {
+                    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

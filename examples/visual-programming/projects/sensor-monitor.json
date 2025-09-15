@@ -1,0 +1,162 @@
+{
+  "name": "Sensor Monitor",
+  "description": "I2C sensor monitoring with audio feedback and LED indicators",
+  "author": "EDPMT Visual Programming",
+  "version": "1.0",
+  "hardware_requirements": [
+    "I2C temperature sensor at address 0x48",
+    "Status LED on GPIO pin 18",
+    "Warning LED on GPIO pin 19",
+    "Audio output capability"
+  ],
+  "connections": {
+    "temp_sensor": "I2C address 0x48",
+    "status_led": "GPIO pin 18 (green)",
+    "warning_led": "GPIO pin 19 (red)",
+    "audio": "System audio output"
+  },
+  "blocks": [
+    {
+      "id": "block_1",
+      "type": "set-variable",
+      "inputs": {
+        "name": "temp_threshold",
+        "value": "25"
+      },
+      "description": "Set temperature threshold"
+    },
+    {
+      "id": "block_2",
+      "type": "i2c-scan",
+      "inputs": {},
+      "description": "Scan for I2C devices"
+    },
+    {
+      "id": "block_3",
+      "type": "beep-pattern",
+      "inputs": {
+        "pattern": "double"
+      },
+      "description": "Startup sound"
+    },
+    {
+      "id": "block_4",
+      "type": "while",
+      "inputs": {
+        "condition": "true"
+      },
+      "children": [
+        {
+          "id": "block_5",
+          "type": "i2c-read",
+          "inputs": {
+            "device": "48",
+            "register": "0",
+            "length": "2"
+          },
+          "output_variable": "temperature",
+          "description": "Read temperature sensor"
+        },
+        {
+          "id": "block_6",
+          "type": "gpio-set",
+          "inputs": {
+            "pin": "18",
+            "value": "1"
+          },
+          "description": "Turn on status LED"
+        },
+        {
+          "id": "block_7",
+          "type": "if",
+          "inputs": {
+            "condition": "temperature > temp_threshold"
+          },
+          "children": [
+            {
+              "id": "block_8",
+              "type": "gpio-set",
+              "inputs": {
+                "pin": "19",
+                "value": "1"
+              },
+              "description": "Turn on warning LED"
+            },
+            {
+              "id": "block_9",
+              "type": "beep-pattern",
+              "inputs": {
+                "pattern": "SOS"
+              },
+              "description": "Warning sound pattern"
+            },
+            {
+              "id": "block_10",
+              "type": "play-tone",
+              "inputs": {
+                "frequency": "1000",
+                "duration": "0.5"
+              },
+              "description": "High temperature alert tone"
+            }
+          ],
+          "else_children": [
+            {
+              "id": "block_11",
+              "type": "gpio-set",
+              "inputs": {
+                "pin": "19",
+                "value": "0"
+              },
+              "description": "Turn off warning LED"
+            },
+            {
+              "id": "block_12",
+              "type": "play-tone",
+              "inputs": {
+                "frequency": "500",
+                "duration": "0.2"
+              },
+              "description": "Normal temperature tone"
+            }
+          ],
+          "description": "Check temperature threshold"
+        },
+        {
+          "id": "block_13",
+          "type": "wait",
+          "inputs": {
+            "seconds": "2"
+          },
+          "description": "Wait 2 seconds before next reading"
+        },
+        {
+          "id": "block_14",
+          "type": "gpio-set",
+          "inputs": {
+            "pin": "18",
+            "value": "0"
+          },
+          "description": "Blink status LED off"
+        },
+        {
+          "id": "block_15",
+          "type": "wait",
+          "inputs": {
+            "seconds": "0.5"
+          },
+          "description": "Short blink pause"
+        }
+      ],
+      "description": "Continuous monitoring loop"
+    }
+  ],
+  "notes": [
+    "Continuously monitors I2C temperature sensor",
+    "Green LED indicates system is active (blinks every 2.5 seconds)",
+    "Red LED activates when temperature exceeds threshold",
+    "Audio feedback provides immediate alerts",
+    "SOS beep pattern for high temperature warnings",
+    "Adjust temp_threshold variable for different alert levels"
+  ]
+}

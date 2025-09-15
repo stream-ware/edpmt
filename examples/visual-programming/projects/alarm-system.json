@@ -1,0 +1,318 @@
+{
+  "name": "Alarm System",
+  "description": "Motion detection alarm with multiple sensors and escalating response",
+  "author": "EDPMT Visual Programming",
+  "version": "1.0",
+  "hardware_requirements": [
+    "Motion sensor on GPIO pin 21",
+    "Door sensor on GPIO pin 22",
+    "Alarm LED on GPIO pin 18",
+    "Status LED on GPIO pin 19",
+    "Audio output capability"
+  ],
+  "connections": {
+    "motion_sensor": "GPIO pin 21",
+    "door_sensor": "GPIO pin 22", 
+    "alarm_led": "GPIO pin 18 (red)",
+    "status_led": "GPIO pin 19 (green)",
+    "audio": "System audio output"
+  },
+  "blocks": [
+    {
+      "id": "block_1",
+      "type": "set-variable",
+      "inputs": {
+        "name": "alarm_active",
+        "value": "false"
+      },
+      "description": "Initialize alarm state"
+    },
+    {
+      "id": "block_2",
+      "type": "set-variable",
+      "inputs": {
+        "name": "alert_count",
+        "value": "0"
+      },
+      "description": "Initialize alert counter"
+    },
+    {
+      "id": "block_3",
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "19",
+        "value": "1"
+      },
+      "description": "Turn on status LED (system armed)"
+    },
+    {
+      "id": "block_4",
+      "type": "beep-pattern",
+      "inputs": {
+        "pattern": "double"
+      },
+      "description": "System armed confirmation"
+    },
+    {
+      "id": "block_5",
+      "type": "while",
+      "inputs": {
+        "condition": "alert_count < 5"
+      },
+      "children": [
+        {
+          "id": "block_6",
+          "type": "gpio-read",
+          "inputs": {
+            "pin": "21"
+          },
+          "output_variable": "motion_detected",
+          "description": "Read motion sensor"
+        },
+        {
+          "id": "block_7",
+          "type": "gpio-read",
+          "inputs": {
+            "pin": "22"
+          },
+          "output_variable": "door_opened",
+          "description": "Read door sensor"
+        },
+        {
+          "id": "block_8",
+          "type": "if",
+          "inputs": {
+            "condition": "motion_detected == 1 OR door_opened == 1"
+          },
+          "children": [
+            {
+              "id": "block_9",
+              "type": "set-variable",
+              "inputs": {
+                "name": "alarm_active",
+                "value": "true"
+              },
+              "description": "Activate alarm state"
+            },
+            {
+              "id": "block_10",
+              "type": "get-variable",
+              "inputs": {
+                "name": "alert_count"
+              },
+              "output_variable": "current_alerts",
+              "description": "Get current alert count"
+            },
+            {
+              "id": "block_11",
+              "type": "set-variable",
+              "inputs": {
+                "name": "alert_count",
+                "value": "current_alerts + 1"
+              },
+              "description": "Increment alert counter"
+            },
+            {
+              "id": "block_12",
+              "type": "if",
+              "inputs": {
+                "condition": "current_alerts < 2"
+              },
+              "children": [
+                {
+                  "id": "block_13",
+                  "type": "beep-pattern",
+                  "inputs": {
+                    "pattern": "single"
+                  },
+                  "description": "Initial warning beep"
+                },
+                {
+                  "id": "block_14",
+                  "type": "repeat",
+                  "inputs": {
+                    "times": "5"
+                  },
+                  "children": [
+                    {
+                      "id": "block_15",
+                      "type": "gpio-set",
+                      "inputs": {
+                        "pin": "18",
+                        "value": "1"
+                      }
+                    },
+                    {
+                      "id": "block_16",
+                      "type": "wait",
+                      "inputs": {
+                        "seconds": "0.5"
+                      }
+                    },
+                    {
+                      "id": "block_17",
+                      "type": "gpio-set",
+                      "inputs": {
+                        "pin": "18",
+                        "value": "0"
+                      }
+                    },
+                    {
+                      "id": "block_18",
+                      "type": "wait",
+                      "inputs": {
+                        "seconds": "0.5"
+                      }
+                    }
+                  ],
+                  "description": "Slow alarm flash"
+                }
+              ],
+              "else_children": [
+                {
+                  "id": "block_19",
+                  "type": "beep-pattern",
+                  "inputs": {
+                    "pattern": "SOS"
+                  },
+                  "description": "Emergency alert pattern"
+                },
+                {
+                  "id": "block_20",
+                  "type": "repeat",
+                  "inputs": {
+                    "times": "10"
+                  },
+                  "children": [
+                    {
+                      "id": "block_21",
+                      "type": "gpio-set",
+                      "inputs": {
+                        "pin": "18",
+                        "value": "1"
+                      }
+                    },
+                    {
+                      "id": "block_22",
+                      "type": "play-tone",
+                      "inputs": {
+                        "frequency": "2000",
+                        "duration": "0.1"
+                      }
+                    },
+                    {
+                      "id": "block_23",
+                      "type": "wait",
+                      "inputs": {
+                        "seconds": "0.1"
+                      }
+                    },
+                    {
+                      "id": "block_24",
+                      "type": "gpio-set",
+                      "inputs": {
+                        "pin": "18",
+                        "value": "0"
+                      }
+                    },
+                    {
+                      "id": "block_25",
+                      "type": "wait",
+                      "inputs": {
+                        "seconds": "0.1"
+                      }
+                    }
+                  ],
+                  "description": "Fast alarm flash with siren"
+                }
+              ],
+              "description": "Escalate alarm response based on alert count"
+            },
+            {
+              "id": "block_26",
+              "type": "wait",
+              "inputs": {
+                "seconds": "3"
+              },
+              "description": "Wait before checking again"
+            }
+          ],
+          "else_children": [
+            {
+              "id": "block_27",
+              "type": "if",
+              "inputs": {
+                "condition": "alarm_active == true"
+              },
+              "children": [
+                {
+                  "id": "block_28",
+                  "type": "set-variable",
+                  "inputs": {
+                    "name": "alarm_active",
+                    "value": "false"
+                  },
+                  "description": "Deactivate alarm"
+                },
+                {
+                  "id": "block_29",
+                  "type": "gpio-set",
+                  "inputs": {
+                    "pin": "18",
+                    "value": "0"
+                  },
+                  "description": "Turn off alarm LED"
+                },
+                {
+                  "id": "block_30",
+                  "type": "beep-pattern",
+                  "inputs": {
+                    "pattern": "single"
+                  },
+                  "description": "All clear signal"
+                }
+              ],
+              "description": "Reset alarm if no motion detected"
+            },
+            {
+              "id": "block_31",
+              "type": "wait",
+              "inputs": {
+                "seconds": "0.5"
+              },
+              "description": "Normal monitoring interval"
+            }
+          ],
+          "description": "Check for intrusion"
+        }
+      ],
+      "description": "Main monitoring loop"
+    },
+    {
+      "id": "block_32",
+      "type": "gpio-set",
+      "inputs": {
+        "pin": "19",
+        "value": "0"
+      },
+      "description": "Turn off status LED"
+    },
+    {
+      "id": "block_33",
+      "type": "beep-pattern",
+      "inputs": {
+        "pattern": "triple"
+      },
+      "description": "System shutdown signal"
+    }
+  ],
+  "notes": [
+    "Multi-sensor alarm system with escalating response",
+    "Monitors both motion sensor (pin 21) and door sensor (pin 22)",
+    "First 2 alerts: slow flash + single beep",
+    "Subsequent alerts: fast flash + siren + SOS pattern",
+    "Status LED shows system is armed",
+    "Alarm resets when no motion detected",
+    "System stops after 5 total alerts"
+  ]
+}
