@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temperature Alert System - EDPMT Visual Blocks</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .standalone-container { max-width: 1200px; margin: 0 auto; background: rgba(255,255,255,0.95); border-radius: 10px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .temp-dashboard { display: flex; justify-content: center; margin: 20px 0; gap: 20px; flex-wrap: wrap; }
+        .temp-widget { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 6px 12px rgba(0,0,0,0.1); text-align: center; min-width: 150px; }
+        .temp-display { font-size: 32px; font-weight: bold; margin: 10px 0; }
+        .temp-normal { color: #28a745; }
+        .temp-warning { color: #ffc107; }
+        .temp-critical { color: #dc3545; }
+        .fan-control { display: flex; align-items: center; gap: 10px; margin-top: 15px; }
+        .fan-icon { font-size: 24px; transition: transform 0.3s ease; }
+        .fan-spinning { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .pwm-bar { width: 100px; height: 6px; background: #e9ecef; border-radius: 3px; overflow: hidden; }
+        .pwm-fill { height: 100%; background: linear-gradient(90deg, #28a745, #ffc107, #dc3545); transition: width 0.3s ease; }
+        .alert-badge { display: inline-block; padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; margin-top: 10px; }
+        .badge-normal { background: #d4edda; color: #155724; }
+        .badge-warning { background: #fff3cd; color: #856404; }
+        .badge-critical { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="standalone-container">
+        <header style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee;">
+            <h1>🎨 EDPMT Visual Programming</h1>
+            <p>Project Visualization: Temperature Alert System</p>
+        </header>
+        <main>
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h2>🌡️ Advanced Temperature Control</h2>
+                <p>Multi-level temperature monitoring with PWM fan control and escalating audio alerts</p>
+            </div>
+
+            <!-- Temperature Control Dashboard -->
+            <div class="temp-dashboard">
+                <div class="temp-widget">
+                    <div style="font-size: 14px; color: #666;">Current Temperature</div>
+                    <div class="temp-display temp-normal" id="current-temp">24.5°C</div>
+                    <div class="alert-badge badge-normal" id="temp-status">NORMAL</div>
+                </div>
+                
+                <div class="temp-widget">
+                    <div style="font-size: 14px; color: #666;">Fan Control</div>
+                    <div class="fan-control">
+                        <span class="fan-icon" id="fan-icon">🌀</span>
+                        <div class="pwm-bar">
+                            <div class="pwm-fill" id="pwm-fill" style="width: 30%;"></div>
+                        </div>
+                        <span id="fan-speed">30%</span>
+                    </div>
+                    <div style="font-size: 14px; color: #666; margin-top: 10px;">PWM Speed Control</div>
+                </div>
+                
+                <div class="temp-widget">
+                    <div style="font-size: 14px; color: #666;">Alert Level</div>
+                    <div class="temp-display" id="alert-level" style="color: #28a745;">0</div>
+                    <div style="font-size: 14px; color: #666;">0=Normal, 1=Warning, 2=Critical</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+                <h4>🔧 Hardware Requirements:</h4>
+                <ul>
+                    <li>BME280 I2C temperature sensor (address 0x76)</li>
+                    <li>PWM fan control on GPIO pin 18</li>
+                    <li>Status LEDs: Green (pin 19), Yellow (pin 20), Red (pin 21)</li>
+                    <li>Audio output for temperature alerts</li>
+                </ul>
+                
+                <h4>📝 Temperature Control Logic:</h4>
+                <ul>
+                    <li><strong>Normal (&lt;28°C):</strong> Green LED, 30% fan speed</li>
+                    <li><strong>Warning (28-35°C):</strong> Yellow LED, 65% fan speed, warning tone</li>
+                    <li><strong>Critical (&gt;35°C):</strong> Red LED, 100% fan speed, SOS alarm</li>
+                    <li>3-second monitoring intervals with escalating responses</li>
+                    <li>Perfect for server rooms, equipment cooling, industrial monitoring</li>
+                </ul>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        let currentTemp = 24.5;
+        let alertLevel = 0;
+        
+        function updateTemperature() {
+            // Simulate temperature fluctuations
+            currentTemp += (Math.random() - 0.5) * 2;
+            currentTemp = Math.max(20, Math.min(40, currentTemp));
+            
+            const tempDisplay = document.getElementById('current-temp');
+            const statusBadge = document.getElementById('temp-status');
+            const alertDisplay = document.getElementById('alert-level');
+            const fanIcon = document.getElementById('fan-icon');
+            const pwmFill = document.getElementById('pwm-fill');
+            const fanSpeed = document.getElementById('fan-speed');
+            
+            tempDisplay.textContent = currentTemp.toFixed(1) + '°C';
+            
+            // Update status based on temperature
+            if (currentTemp < 28) {
+                alertLevel = 0;
+                tempDisplay.className = 'temp-display temp-normal';
+                statusBadge.className = 'alert-badge badge-normal';
+                statusBadge.textContent = 'NORMAL';
+                fanIcon.className = 'fan-icon';
+                pwmFill.style.width = '30%';
+                fanSpeed.textContent = '30%';
+            } else if (currentTemp < 35) {
+                alertLevel = 1;
+                tempDisplay.className = 'temp-display temp-warning';
+                statusBadge.className = 'alert-badge badge-warning';
+                statusBadge.textContent = 'WARNING';
+                fanIcon.className = 'fan-icon fan-spinning';
+                pwmFill.style.width = '65%';
+                fanSpeed.textContent = '65%';
+            } else {
+                alertLevel = 2;
+                tempDisplay.className = 'temp-display temp-critical';
+                statusBadge.className = 'alert-badge badge-critical';
+                statusBadge.textContent = 'CRITICAL';
+                fanIcon.className = 'fan-icon fan-spinning';
+                pwmFill.style.width = '100%';
+                fanSpeed.textContent = '100%';
+            }
+            
+            alertDisplay.textContent = alertLevel;
+            alertDisplay.style.color = alertLevel === 0 ? '#28a745' : alertLevel === 1 ? '#ffc107' : '#dc3545';
+        }
+        
+        // Start temperature simulation
+        updateTemperature();
+        setInterval(updateTemperature, 3000);
+    </script>
+</body>
+</html>

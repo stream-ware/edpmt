@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Doorbell - EDPMT Visual Blocks</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .standalone-container { max-width: 1200px; margin: 0 auto; background: rgba(255,255,255,0.95); border-radius: 10px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .standalone-header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee; }
+        .project-visualization { margin: 20px 0; }
+        .project-header { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .block-item { margin: 15px 0; border: 2px solid #ddd; border-radius: 8px; background: white; border-left-width: 5px; transition: all 0.3s ease; }
+        .block-item:hover { transform: translateX(5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .block-header { padding: 15px; color: white; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .block-content { padding: 15px; }
+        .block-inputs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+        .input-item { background: #f0f0f0; padding: 5px 10px; border-radius: 4px; font-size: 0.9em; }
+        .input-key { font-weight: bold; color: #555; }
+        .input-value { color: #333; margin-left: 5px; }
+        .block-description { font-style: italic; color: #666; margin-top: 10px; }
+        .block-children { margin-left: 20px; border-left: 2px dashed #ccc; padding-left: 15px; margin-top: 15px; }
+        .children-label { font-weight: bold; color: #555; margin-bottom: 10px; cursor: pointer; }
+        .block-connector { text-align: center; margin: 5px 0; }
+        .connector-line { width: 2px; height: 20px; background: #ccc; margin: 0 auto; }
+        .connector-arrow { color: #ccc; font-size: 12px; }
+        .project-footer { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
+        .doorbell-demo { display: flex; justify-content: center; margin: 20px 0; }
+        .doorbell-device { background: #fff; border-radius: 15px; padding: 30px; box-shadow: 0 8px 16px rgba(0,0,0,0.2); text-align: center; min-width: 200px; border: 3px solid #007bff; }
+        .doorbell-button { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(145deg, #007bff, #0056b3); border: none; color: white; font-size: 24px; cursor: pointer; margin: 15px auto; display: block; transition: all 0.3s ease; }
+        .doorbell-button:hover { transform: scale(1.1); box-shadow: 0 6px 20px rgba(0,123,255,0.4); }
+        .doorbell-button:active { transform: scale(0.95); }
+        .visitor-counter { margin-top: 15px; font-size: 18px; font-weight: bold; color: #007bff; }
+        .status-lights { display: flex; justify-content: center; gap: 10px; margin: 15px 0; }
+        .status-light { width: 15px; height: 15px; border-radius: 50%; }
+        .light-power { background: #28a745; }
+        .light-motion { background: #ffc107; }
+        .light-button { background: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="standalone-container">
+        <header class="standalone-header">
+            <h1>🎨 EDPMT Visual Programming</h1>
+            <p>Project Visualization: Smart Doorbell</p>
+        </header>
+        <main>
+            <div class="project-visualization">
+                <div class="project-header">
+                    <h2>🔔 Smart Doorbell System</h2>
+                    <p class="project-description">Interactive doorbell with melody, lighting, visitor counting, and debounce logic</p>
+                    <div class="project-meta">
+                        <span class="author">👤 EDPMT Visual Programming</span>
+                        <span class="version">📦 v1.0</span>
+                    </div>
+                </div>
+
+                <!-- Interactive Doorbell Demo -->
+                <div class="doorbell-demo">
+                    <div class="doorbell-device">
+                        <h3>🏠 Smart Doorbell</h3>
+                        <button class="doorbell-button" id="doorbell-btn" onclick="ringDoorbell()">🔔</button>
+                        <div class="status-lights">
+                            <div class="status-light light-power" title="Power"></div>
+                            <div class="status-light light-motion" title="Motion" id="motion-light"></div>
+                            <div class="status-light light-button" title="Button" id="button-light"></div>
+                        </div>
+                        <div class="visitor-counter">Visitors Today: <span id="visitor-count">0</span></div>
+                    </div>
+                </div>
+
+                <div class="block-flow">
+                    <!-- Initialize Visitor Counter -->
+                    <div class="block-item" style="border-left-color: #FFC107;">
+                        <div class="block-header" style="background-color: #FFC107;">
+                            <span class="block-icon">💾</span>
+                            <span class="block-type">Set Variable</span>
+                            <span class="block-id">#block_1</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">name:</span>
+                                    <span class="input-value">visitor_count</span>
+                                </div>
+                                <div class="input-item">
+                                    <span class="input-key">value:</span>
+                                    <span class="input-value">0</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 Initialize daily visitor counter</div>
+                        </div>
+                    </div>
+
+                    <div class="block-connector">
+                        <div class="connector-line"></div>
+                        <div class="connector-arrow">▼</div>
+                    </div>
+
+                    <!-- Initialize Last Button Press Time -->
+                    <div class="block-item" style="border-left-color: #FFC107;">
+                        <div class="block-header" style="background-color: #FFC107;">
+                            <span class="block-icon">💾</span>
+                            <span class="block-type">Set Variable</span>
+                            <span class="block-id">#block_2</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">name:</span>
+                                    <span class="input-value">last_press_time</span>
+                                </div>
+                                <div class="input-item">
+                                    <span class="input-key">value:</span>
+                                    <span class="input-value">0</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 Track last button press for debouncing</div>
+                        </div>
+                    </div>
+
+                    <div class="block-connector">
+                        <div class="connector-line"></div>
+                        <div class="connector-arrow">▼</div>
+                    </div>
+
+                    <!-- Welcome LED -->
+                    <div class="block-item" style="border-left-color: #4CAF50;">
+                        <div class="block-header" style="background-color: #4CAF50;">
+                            <span class="block-icon">💡</span>
+                            <span class="block-type">GPIO Set</span>
+                            <span class="block-id">#welcome_led</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">pin:</span>
+                                    <span class="input-value">18</span>
+                                </div>
+                                <div class="input-item">
+                                    <span class="input-key">value:</span>
+                                    <span class="input-value">1</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 Turn on welcome LED</div>
+                        </div>
+                    </div>
+
+                    <div class="block-connector">
+                        <div class="connector-line"></div>
+                        <div class="connector-arrow">▼</div>
+                    </div>
+
+                    <!-- Startup Sound -->
+                    <div class="block-item" style="border-left-color: #009688;">
+                        <div class="block-header" style="background-color: #009688;">
+                            <span class="block-icon">🔊</span>
+                            <span class="block-type">Beep Pattern</span>
+                            <span class="block-id">#startup_sound</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">pattern:</span>
+                                    <span class="input-value">double</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 Doorbell system ready</div>
+                        </div>
+                    </div>
+
+                    <div class="block-connector">
+                        <div class="connector-line"></div>
+                        <div class="connector-arrow">▼</div>
+                    </div>
+
+                    <!-- Main Doorbell Loop -->
+                    <div class="block-item" style="border-left-color: #FF5722;">
+                        <div class="block-header" style="background-color: #FF5722;">
+                            <span class="block-icon">🔄</span>
+                            <span class="block-type">Repeat</span>
+                            <span class="block-id">#doorbell_loop</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">times:</span>
+                                    <span class="input-value">100</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 Listen for doorbell presses</div>
+                        </div>
+                        
+                        <div class="block-children">
+                            <div class="children-label">Doorbell Response Sequence (Click to expand):</div>
+                            
+                            <!-- Button Check -->
+                            <div class="block-item" style="border-left-color: #17a2b8;">
+                                <div class="block-header" style="background-color: #17a2b8;">
+                                    <span class="block-icon">👆</span>
+                                    <span class="block-type">GPIO Read</span>
+                                    <span class="block-id">#button_check</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-inputs">
+                                        <div class="input-item">
+                                            <span class="input-key">pin:</span>
+                                            <span class="input-value">21</span>
+                                        </div>
+                                    </div>
+                                    <div class="block-description">💬 Check doorbell button</div>
+                                </div>
+                            </div>
+
+                            <div class="block-connector">
+                                <div class="connector-line"></div>
+                                <div class="connector-arrow">▼</div>
+                            </div>
+
+                            <!-- Button Pressed Condition -->
+                            <div class="block-item" style="border-left-color: #dc3545;">
+                                <div class="block-header" style="background-color: #dc3545;">
+                                    <span class="block-icon">🔔</span>
+                                    <span class="block-type">If Button Pressed</span>
+                                    <span class="block-id">#button_pressed</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-description">💬 If doorbell button is pressed</div>
+                                </div>
+                                
+                                <div class="block-children">
+                                    <div class="children-label">Doorbell Response Actions:</div>
+                                    
+                                    <!-- Debounce Check -->
+                                    <div class="block-item" style="border-left-color: #dc3545;">
+                                        <div class="block-header" style="background-color: #6c757d;">
+                                            <span class="block-icon">⏱️</span>
+                                            <span class="block-type">If Time Since Last Press > 2s</span>
+                                            <span class="block-id">#debounce</span>
+                                        </div>
+                                        <div class="block-content">
+                                            <div class="block-description">💬 Debounce protection</div>
+                                        </div>
+                                        
+                                        <div class="block-children">
+                                            <div class="children-label">Valid Press Actions:</div>
+                                            
+                                            <!-- Increment Visitor Count -->
+                                            <div class="block-item" style="border-left-color: #FFEB3B;">
+                                                <div class="block-header" style="background-color: #FFEB3B; color: #333;">
+                                                    <span class="block-icon">📈</span>
+                                                    <span class="block-type">Increment Variable</span>
+                                                    <span class="block-id">#count_visitor</span>
+                                                </div>
+                                                <div class="block-content">
+                                                    <div class="block-inputs">
+                                                        <div class="input-item">
+                                                            <span class="input-key">variable:</span>
+                                                            <span class="input-value">visitor_count</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-description">💬 Count the visitor</div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Doorbell Melody Part 1 -->
+                                            <div class="block-item" style="border-left-color: #e83e8c;">
+                                                <div class="block-header" style="background-color: #e83e8c;">
+                                                    <span class="block-icon">🎵</span>
+                                                    <span class="block-type">Play Tone</span>
+                                                    <span class="block-id">#melody1</span>
+                                                </div>
+                                                <div class="block-content">
+                                                    <div class="block-inputs">
+                                                        <div class="input-item">
+                                                            <span class="input-key">frequency:</span>
+                                                            <span class="input-value">659</span>
+                                                        </div>
+                                                        <div class="input-item">
+                                                            <span class="input-key">duration:</span>
+                                                            <span class="input-value">0.4</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-description">💬 First note (E)</div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Short Pause -->
+                                            <div class="block-item" style="border-left-color: #607D8B;">
+                                                <div class="block-header" style="background-color: #607D8B;">
+                                                    <span class="block-icon">⏰</span>
+                                                    <span class="block-type">Wait</span>
+                                                    <span class="block-id">#pause1</span>
+                                                </div>
+                                                <div class="block-content">
+                                                    <div class="block-inputs">
+                                                        <div class="input-item">
+                                                            <span class="input-key">seconds:</span>
+                                                            <span class="input-value">0.1</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-description">💬 Brief pause</div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Doorbell Melody Part 2 -->
+                                            <div class="block-item" style="border-left-color: #e83e8c;">
+                                                <div class="block-header" style="background-color: #e83e8c;">
+                                                    <span class="block-icon">🎵</span>
+                                                    <span class="block-type">Play Tone</span>
+                                                    <span class="block-id">#melody2</span>
+                                                </div>
+                                                <div class="block-content">
+                                                    <div class="block-inputs">
+                                                        <div class="input-item">
+                                                            <span class="input-key">frequency:</span>
+                                                            <span class="input-value">523</span>
+                                                        </div>
+                                                        <div class="input-item">
+                                                            <span class="input-key">duration:</span>
+                                                            <span class="input-value">0.6</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-description">💬 Second note (C)</div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Lighting Effect -->
+                                            <div class="block-item" style="border-left-color: #FF5722;">
+                                                <div class="block-header" style="background-color: #FF5722;">
+                                                    <span class="block-icon">🔄</span>
+                                                    <span class="block-type">Repeat</span>
+                                                    <span class="block-id">#light_effect</span>
+                                                </div>
+                                                <div class="block-content">
+                                                    <div class="block-inputs">
+                                                        <div class="input-item">
+                                                            <span class="input-key">times:</span>
+                                                            <span class="input-value">3</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-description">💬 Welcome light flashing</div>
+                                                </div>
+                                                
+                                                <div class="block-children">
+                                                    <div class="children-label">Light Flash Sequence:</div>
+                                                    
+                                                    <div class="block-item" style="border-left-color: #4CAF50;">
+                                                        <div class="block-header" style="background-color: #4CAF50;">
+                                                            <span class="block-icon">💡</span>
+                                                            <span class="block-type">GPIO Toggle</span>
+                                                            <span class="block-id">#flash_on</span>
+                                                        </div>
+                                                        <div class="block-content">
+                                                            <div class="block-inputs">
+                                                                <div class="input-item">
+                                                                    <span class="input-key">pin:</span>
+                                                                    <span class="input-value">19</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="block-description">💬 Flash welcome lights</div>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="block-item" style="border-left-color: #607D8B;">
+                                                        <div class="block-header" style="background-color: #607D8B;">
+                                                            <span class="block-icon">⏰</span>
+                                                            <span class="block-type">Wait</span>
+                                                            <span class="block-id">#flash_wait</span>
+                                                        </div>
+                                                        <div class="block-content">
+                                                            <div class="block-inputs">
+                                                                <div class="input-item">
+                                                                    <span class="input-key">seconds:</span>
+                                                                    <span class="input-value">0.2</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="block-description">💬 Flash timing</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Update Last Press Time -->
+                                            <div class="block-item" style="border-left-color: #FFC107;">
+                                                <div class="block-header" style="background-color: #FFC107;">
+                                                    <span class="block-icon">🕐</span>
+                                                    <span class="block-type">Set Variable</span>
+                                                    <span class="block-id">#update_time</span>
+                                                </div>
+                                                <div class="block-content">
+                                                    <div class="block-inputs">
+                                                        <div class="input-item">
+                                                            <span class="input-key">name:</span>
+                                                            <span class="input-value">last_press_time</span>
+                                                        </div>
+                                                        <div class="input-item">
+                                                            <span class="input-key">value:</span>
+                                                            <span class="input-value">current_time</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-description">💬 Update debounce timer</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="block-connector">
+                                <div class="connector-line"></div>
+                                <div class="connector-arrow">▼</div>
+                            </div>
+
+                            <!-- Wait between checks -->
+                            <div class="block-item" style="border-left-color: #607D8B;">
+                                <div class="block-header" style="background-color: #607D8B;">
+                                    <span class="block-icon">⏰</span>
+                                    <span class="block-type">Wait</span>
+                                    <span class="block-id">#check_wait</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-inputs">
+                                        <div class="input-item">
+                                            <span class="input-key">seconds:</span>
+                                            <span class="input-value">0.1</span>
+                                        </div>
+                                    </div>
+                                    <div class="block-description">💬 Wait between button checks</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="block-connector">
+                        <div class="connector-line"></div>
+                        <div class="connector-arrow">▼</div>
+                    </div>
+
+                    <!-- Shutdown Sound -->
+                    <div class="block-item" style="border-left-color: #009688;">
+                        <div class="block-header" style="background-color: #009688;">
+                            <span class="block-icon">🔊</span>
+                            <span class="block-type">Beep Pattern</span>
+                            <span class="block-id">#shutdown_sound</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">pattern:</span>
+                                    <span class="input-value">triple</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 Doorbell system shutdown</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-footer">
+                    <div class="hardware-requirements">
+                        <h4>🔧 Hardware Requirements:</h4>
+                        <ul>
+                            <li>Doorbell button (momentary switch) on GPIO pin 21</li>
+                            <li>Welcome LED on GPIO pin 18</li>
+                            <li>Flash lights on GPIO pin 19</li>
+                            <li>Audio output for doorbell melody</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="connections">
+                        <h4>🔌 Connections:</h4>
+                        <ul>
+                            <li><strong>doorbell_button:</strong> GPIO pin 21 (with pull-up resistor)</li>
+                            <li><strong>welcome_led:</strong> GPIO pin 18</li>
+                            <li><strong>flash_lights:</strong> GPIO pin 19</li>
+                            <li><strong>audio:</strong> System audio output</li>
+                        </ul>
+                    </div>
+
+                    <div class="project-notes">
+                        <h4>📝 Notes:</h4>
+                        <ul>
+                            <li>Professional smart doorbell with musical chime</li>
+                            <li>Two-tone melody: E note (659Hz) followed by C note (523Hz)</li>
+                            <li>Visual feedback with welcome LED and flashing lights</li>
+                            <li>Visitor counting with daily statistics</li>
+                            <li>Debounce protection prevents multiple rapid triggers</li>
+                            <li>2-second minimum time between valid button presses</li>
+                            <li>Perfect for home automation and smart home systems</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        let visitorCount = 0;
+        let lastPress = 0;
+        
+        function ringDoorbell() {
+            const now = Date.now();
+            const buttonLight = document.getElementById('button-light');
+            const motionLight = document.getElementById('motion-light');
+            
+            // Debounce check (2 seconds)
+            if (now - lastPress > 2000) {
+                // Valid press
+                visitorCount++;
+                document.getElementById('visitor-count').textContent = visitorCount;
+                lastPress = now;
+                
+                // Visual feedback
+                buttonLight.style.background = '#ff0000';
+                motionLight.style.background = '#00ff00';
+                
+                // Reset lights after animation
+                setTimeout(() => {
+                    buttonLight.style.background = '#dc3545';
+                    motionLight.style.background = '#ffc107';
+                }, 1000);
+                
+                // Play doorbell sound simulation
+                console.log('🔔 Ding-dong! Visitor #' + visitorCount);
+            } else {
+                // Debounced - show briefly
+                buttonLight.style.background = '#ffcccc';
+                setTimeout(() => {
+                    buttonLight.style.background = '#dc3545';
+                }, 200);
+            }
+        }
+        
+        // Expandable sections
+        document.querySelectorAll('.children-label').forEach(label => {
+            label.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const section = this.parentElement;
+                section.classList.toggle('collapsed');
+                
+                const content = Array.from(section.children).slice(1);
+                content.forEach(el => {
+                    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

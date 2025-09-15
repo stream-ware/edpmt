@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alarm System - EDPMT Visual Blocks</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .standalone-container { max-width: 1200px; margin: 0 auto; background: rgba(255,255,255,0.95); border-radius: 10px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .standalone-header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee; }
+        .project-visualization { margin: 20px 0; }
+        .project-header { background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .block-item { margin: 15px 0; border: 2px solid #ddd; border-radius: 8px; background: white; border-left-width: 5px; transition: all 0.3s ease; }
+        .block-item:hover { transform: translateX(5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .block-header { padding: 15px; color: white; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .block-content { padding: 15px; }
+        .block-inputs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+        .input-item { background: #f0f0f0; padding: 5px 10px; border-radius: 4px; font-size: 0.9em; }
+        .input-key { font-weight: bold; color: #555; }
+        .input-value { color: #333; margin-left: 5px; }
+        .block-description { font-style: italic; color: #666; margin-top: 10px; }
+        .block-children { margin-left: 20px; border-left: 2px dashed #ccc; padding-left: 15px; margin-top: 15px; }
+        .children-label { font-weight: bold; color: #555; margin-bottom: 10px; cursor: pointer; }
+        .block-connector { text-align: center; margin: 5px 0; }
+        .connector-line { width: 2px; height: 20px; background: #ccc; margin: 0 auto; }
+        .connector-arrow { color: #ccc; font-size: 12px; }
+        .project-footer { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; }
+        .alarm-dashboard { display: flex; justify-content: center; margin: 20px 0; gap: 15px; flex-wrap: wrap; }
+        .sensor-zone { background: #fff; border-radius: 8px; padding: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align: center; min-width: 100px; }
+        .zone-status { width: 20px; height: 20px; border-radius: 50%; margin: 10px auto; }
+        .status-armed { background: #28a745; }
+        .status-triggered { background: #dc3545; animation: pulse 1s infinite; }
+        .status-disarmed { background: #6c757d; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .zone-label { font-size: 12px; color: #666; margin-top: 5px; }
+        .system-status { background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="standalone-container">
+        <header class="standalone-header">
+            <h1>🎨 EDPMT Visual Programming</h1>
+            <p>Project Visualization: Alarm System</p>
+        </header>
+        <main>
+            <div class="project-visualization">
+                <div class="project-header">
+                    <h2>🛡️ Advanced Alarm System</h2>
+                    <p class="project-description">Multi-sensor security system with motion detection and escalating alerts</p>
+                    <div class="project-meta">
+                        <span class="author">👤 EDPMT Visual Programming</span>
+                        <span class="version">📦 v1.0</span>
+                    </div>
+                </div>
+
+                <!-- System Status Dashboard -->
+                <div class="system-status">
+                    <h3>🔒 System Status: <span id="system-state">ARMED</span></h3>
+                    <p>Monitoring: <span id="active-zones">4</span> zones | Alerts: <span id="alert-count">0</span></p>
+                </div>
+
+                <!-- Security Zone Dashboard -->
+                <div class="alarm-dashboard">
+                    <div class="sensor-zone">
+                        <div class="zone-status status-armed" id="zone1"></div>
+                        <div class="zone-label">Front Door</div>
+                    </div>
+                    <div class="sensor-zone">
+                        <div class="zone-status status-armed" id="zone2"></div>
+                        <div class="zone-label">Motion Sensor</div>
+                    </div>
+                    <div class="sensor-zone">
+                        <div class="zone-status status-armed" id="zone3"></div>
+                        <div class="zone-label">Window</div>
+                    </div>
+                    <div class="sensor-zone">
+                        <div class="zone-status status-armed" id="zone4"></div>
+                        <div class="zone-label">Back Door</div>
+                    </div>
+                </div>
+
+                <div class="block-flow">
+                    <!-- Initialize Security Variables -->
+                    <div class="block-item" style="border-left-color: #FFC107;">
+                        <div class="block-header" style="background-color: #FFC107;">
+                            <span class="block-icon">💾</span>
+                            <span class="block-type">Set Variable</span>
+                            <span class="block-id">#block_1</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">name:</span>
+                                    <span class="input-value">system_armed</span>
+                                </div>
+                                <div class="input-item">
+                                    <span class="input-key">value:</span>
+                                    <span class="input-value">1</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 Arm the security system</div>
+                        </div>
+                    </div>
+
+                    <div class="block-connector">
+                        <div class="connector-line"></div>
+                        <div class="connector-arrow">▼</div>
+                    </div>
+
+                    <!-- Initialize Alert Level -->
+                    <div class="block-item" style="border-left-color: #FFC107;">
+                        <div class="block-header" style="background-color: #FFC107;">
+                            <span class="block-icon">💾</span>
+                            <span class="block-type">Set Variable</span>
+                            <span class="block-id">#block_2</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">name:</span>
+                                    <span class="input-value">alert_level</span>
+                                </div>
+                                <div class="input-item">
+                                    <span class="input-key">value:</span>
+                                    <span class="input-value">0</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 Initialize alert level (0=normal, 1=warning, 2=alarm)</div>
+                        </div>
+                    </div>
+
+                    <div class="block-connector">
+                        <div class="connector-line"></div>
+                        <div class="connector-arrow">▼</div>
+                    </div>
+
+                    <!-- System Armed Notification -->
+                    <div class="block-item" style="border-left-color: #009688;">
+                        <div class="block-header" style="background-color: #009688;">
+                            <span class="block-icon">🔊</span>
+                            <span class="block-type">Beep Pattern</span>
+                            <span class="block-id">#armed_sound</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">pattern:</span>
+                                    <span class="input-value">double</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 System armed confirmation</div>
+                        </div>
+                    </div>
+
+                    <div class="block-connector">
+                        <div class="connector-line"></div>
+                        <div class="connector-arrow">▼</div>
+                    </div>
+
+                    <!-- Main Security Loop -->
+                    <div class="block-item" style="border-left-color: #FF5722;">
+                        <div class="block-header" style="background-color: #FF5722;">
+                            <span class="block-icon">🔄</span>
+                            <span class="block-type">Repeat</span>
+                            <span class="block-id">#security_loop</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">times:</span>
+                                    <span class="input-value">50</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 Continuous security monitoring</div>
+                        </div>
+                        
+                        <div class="block-children">
+                            <div class="children-label">Security Monitoring Sequence (Click to expand):</div>
+                            
+                            <!-- Motion Sensor Check -->
+                            <div class="block-item" style="border-left-color: #17a2b8;">
+                                <div class="block-header" style="background-color: #17a2b8;">
+                                    <span class="block-icon">👁️</span>
+                                    <span class="block-type">GPIO Read</span>
+                                    <span class="block-id">#motion_check</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-inputs">
+                                        <div class="input-item">
+                                            <span class="input-key">pin:</span>
+                                            <span class="input-value">21</span>
+                                        </div>
+                                    </div>
+                                    <div class="block-description">💬 Check motion sensor (PIR)</div>
+                                </div>
+                            </div>
+
+                            <div class="block-connector">
+                                <div class="connector-line"></div>
+                                <div class="connector-arrow">▼</div>
+                            </div>
+
+                            <!-- Motion Detection Condition -->
+                            <div class="block-item" style="border-left-color: #dc3545;">
+                                <div class="block-header" style="background-color: #dc3545;">
+                                    <span class="block-icon">🚨</span>
+                                    <span class="block-type">If Motion Detected</span>
+                                    <span class="block-id">#motion_detected</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-description">💬 If motion sensor triggered</div>
+                                </div>
+                                
+                                <div class="block-children">
+                                    <div class="children-label">Alert Escalation Sequence:</div>
+                                    
+                                    <!-- Alert LED -->
+                                    <div class="block-item" style="border-left-color: #4CAF50;">
+                                        <div class="block-header" style="background-color: #dc3545;">
+                                            <span class="block-icon">🔴</span>
+                                            <span class="block-type">GPIO Set</span>
+                                            <span class="block-id">#alert_led</span>
+                                        </div>
+                                        <div class="block-content">
+                                            <div class="block-inputs">
+                                                <div class="input-item">
+                                                    <span class="input-key">pin:</span>
+                                                    <span class="input-value">18</span>
+                                                </div>
+                                                <div class="input-item">
+                                                    <span class="input-key">value:</span>
+                                                    <span class="input-value">1</span>
+                                                </div>
+                                            </div>
+                                            <div class="block-description">💬 Activate alert LED</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Increment Alert Level -->
+                                    <div class="block-item" style="border-left-color: #FFEB3B;">
+                                        <div class="block-header" style="background-color: #FFEB3B; color: #333;">
+                                            <span class="block-icon">📈</span>
+                                            <span class="block-type">Increment Variable</span>
+                                            <span class="block-id">#escalate</span>
+                                        </div>
+                                        <div class="block-content">
+                                            <div class="block-inputs">
+                                                <div class="input-item">
+                                                    <span class="input-key">variable:</span>
+                                                    <span class="input-value">alert_level</span>
+                                                </div>
+                                            </div>
+                                            <div class="block-description">💬 Escalate alert level</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Alert Level 1: Warning -->
+                                    <div class="block-item" style="border-left-color: #dc3545;">
+                                        <div class="block-header" style="background-color: #ffc107; color: #333;">
+                                            <span class="block-icon">⚠️</span>
+                                            <span class="block-type">If Alert Level = 1</span>
+                                            <span class="block-id">#level1_check</span>
+                                        </div>
+                                        <div class="block-content">
+                                            <div class="block-description">💬 Warning level response</div>
+                                        </div>
+                                        
+                                        <div class="block-children">
+                                            <div class="children-label">Level 1 Actions:</div>
+                                            
+                                            <div class="block-item" style="border-left-color: #e83e8c;">
+                                                <div class="block-header" style="background-color: #e83e8c;">
+                                                    <span class="block-icon">🔊</span>
+                                                    <span class="block-type">Play Tone</span>
+                                                    <span class="block-id">#warning_tone</span>
+                                                </div>
+                                                <div class="block-content">
+                                                    <div class="block-inputs">
+                                                        <div class="input-item">
+                                                            <span class="input-key">frequency:</span>
+                                                            <span class="input-value">800</span>
+                                                        </div>
+                                                        <div class="input-item">
+                                                            <span class="input-key">duration:</span>
+                                                            <span class="input-value">1</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-description">💬 Warning tone</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Alert Level 2: Full Alarm -->
+                                    <div class="block-item" style="border-left-color: #dc3545;">
+                                        <div class="block-header" style="background-color: #dc3545;">
+                                            <span class="block-icon">🚨</span>
+                                            <span class="block-type">If Alert Level >= 2</span>
+                                            <span class="block-id">#level2_check</span>
+                                        </div>
+                                        <div class="block-content">
+                                            <div class="block-description">💬 Full alarm response</div>
+                                        </div>
+                                        
+                                        <div class="block-children">
+                                            <div class="children-label">Level 2 Actions:</div>
+                                            
+                                            <div class="block-item" style="border-left-color: #009688;">
+                                                <div class="block-header" style="background-color: #009688;">
+                                                    <span class="block-icon">🔊</span>
+                                                    <span class="block-type">Beep Pattern</span>
+                                                    <span class="block-id">#alarm_pattern</span>
+                                                </div>
+                                                <div class="block-content">
+                                                    <div class="block-inputs">
+                                                        <div class="input-item">
+                                                            <span class="input-key">pattern:</span>
+                                                            <span class="input-value">SOS</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-description">💬 Emergency alarm pattern</div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Strobe Light -->
+                                            <div class="block-item" style="border-left-color: #FF5722;">
+                                                <div class="block-header" style="background-color: #FF5722;">
+                                                    <span class="block-icon">💡</span>
+                                                    <span class="block-type">Repeat</span>
+                                                    <span class="block-id">#strobe</span>
+                                                </div>
+                                                <div class="block-content">
+                                                    <div class="block-inputs">
+                                                        <div class="input-item">
+                                                            <span class="input-key">times:</span>
+                                                            <span class="input-value">5</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="block-description">💬 Strobe light effect</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="block-connector">
+                                <div class="connector-line"></div>
+                                <div class="connector-arrow">▼</div>
+                            </div>
+
+                            <!-- Wait between checks -->
+                            <div class="block-item" style="border-left-color: #607D8B;">
+                                <div class="block-header" style="background-color: #607D8B;">
+                                    <span class="block-icon">⏰</span>
+                                    <span class="block-type">Wait</span>
+                                    <span class="block-id">#patrol_wait</span>
+                                </div>
+                                <div class="block-content">
+                                    <div class="block-inputs">
+                                        <div class="input-item">
+                                            <span class="input-key">seconds:</span>
+                                            <span class="input-value">1</span>
+                                        </div>
+                                    </div>
+                                    <div class="block-description">💬 Wait 1 second between security checks</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="block-connector">
+                        <div class="connector-line"></div>
+                        <div class="connector-arrow">▼</div>
+                    </div>
+
+                    <!-- System Disarm -->
+                    <div class="block-item" style="border-left-color: #009688;">
+                        <div class="block-header" style="background-color: #009688;">
+                            <span class="block-icon">🔊</span>
+                            <span class="block-type">Beep Pattern</span>
+                            <span class="block-id">#disarm_sound</span>
+                        </div>
+                        <div class="block-content">
+                            <div class="block-inputs">
+                                <div class="input-item">
+                                    <span class="input-key">pattern:</span>
+                                    <span class="input-value">triple</span>
+                                </div>
+                            </div>
+                            <div class="block-description">💬 System disarmed notification</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="project-footer">
+                    <div class="hardware-requirements">
+                        <h4>🔧 Hardware Requirements:</h4>
+                        <ul>
+                            <li>PIR Motion Sensor on GPIO pin 21</li>
+                            <li>Alert LED on GPIO pin 18</li>
+                            <li>Optional: Strobe light on GPIO pin 19</li>
+                            <li>Audio output for alarm sounds</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="connections">
+                        <h4>🔌 Connections:</h4>
+                        <ul>
+                            <li><strong>motion_sensor:</strong> GPIO pin 21 (PIR sensor)</li>
+                            <li><strong>alert_led:</strong> GPIO pin 18</li>
+                            <li><strong>strobe_light:</strong> GPIO pin 19 (optional)</li>
+                            <li><strong>audio:</strong> System audio output</li>
+                        </ul>
+                    </div>
+
+                    <div class="project-notes">
+                        <h4>📝 Notes:</h4>
+                        <ul>
+                            <li>Professional-grade multi-zone security system</li>
+                            <li>Escalating alert system: Warning → Full Alarm → Emergency</li>
+                            <li>Motion detection using PIR (Passive Infrared) sensor</li>
+                            <li>Visual alerts with LED indicators and optional strobe</li>
+                            <li>Audio alerts with different patterns for different threat levels</li>
+                            <li>Continuous monitoring with 1-second check intervals</li>
+                            <li>Perfect for home security, office protection, or asset monitoring</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        let alertCount = 0;
+        let systemArmed = true;
+        
+        // Simulate security system activity
+        function simulateSecurityActivity() {
+            const zones = ['zone1', 'zone2', 'zone3', 'zone4'];
+            
+            // Randomly trigger zones
+            if (Math.random() < 0.1 && systemArmed) {
+                const randomZone = zones[Math.floor(Math.random() * zones.length)];
+                const zoneElement = document.getElementById(randomZone);
+                
+                // Trigger alert
+                zoneElement.className = 'zone-status status-triggered';
+                alertCount++;
+                document.getElementById('alert-count').textContent = alertCount;
+                document.getElementById('system-state').textContent = 'ALERT';
+                
+                // Reset after 3 seconds
+                setTimeout(() => {
+                    zoneElement.className = 'zone-status status-armed';
+                    if (alertCount === 0) {
+                        document.getElementById('system-state').textContent = 'ARMED';
+                    }
+                }, 3000);
+            }
+        }
+        
+        // Start security simulation
+        setInterval(simulateSecurityActivity, 2000);
+        
+        // Expandable sections
+        document.querySelectorAll('.children-label').forEach(label => {
+            label.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const section = this.parentElement;
+                section.classList.toggle('collapsed');
+                
+                const content = Array.from(section.children).slice(1);
+                content.forEach(el => {
+                    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
