@@ -21,10 +21,10 @@ Key Features:
 - Cross-platform support (Linux, Windows, macOS)
 """
 
-__version__ = "1.0.0"
-__author__ = "Stream-Ware Team"
+__version__ = "1.0.1"
+__author__ = "Tom Sapletta"
 __license__ = "Apache 2.0"
-__copyright__ = "Copyright 2024 Stream-Ware Team"
+__copyright__ = "Copyright 2025 Tom Sapletta"
 
 # Import main classes for easy access
 from .transparent import (

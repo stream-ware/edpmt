@@ -172,6 +172,10 @@ validate:
 	@python -c "import websockets; print('✅ websockets OK')" 2>/dev/null || echo "❌ websockets missing"
 	@echo "✅ Validation complete"
 
+# Troubleshoot installation issues
+troubleshoot:
+	@bash scripts/troubleshoot-install.sh
+
 # Health check for running server
 health-check:
 	@echo "🏥 Performing EDPMT health check..."
@@ -268,6 +272,7 @@ help:
 	@echo ""
 	@echo "Validation:"
 	@echo "  make validate       - Validate EDPMT setup"
+	@echo "  make troubleshoot   - Troubleshoot installation issues"
 	@echo "  make health-check   - Check server health"
 	@echo "  make test-frontend  - Test frontend connectivity"
 	@echo ""
@@ -286,4 +291,4 @@ help:
 	@echo "Publishing:"
 	@echo "  make publish        - Publish to PyPI"
 
-.PHONY: all setup-dev install install-all build start stop test-e2e-bash test-e2e-python test-gpio test-i2c test-spi test-uart test-examples test-all server-dev server-tls frontend-demo validate health-check test-frontend docs-examples clean clean-python logs logs-server monitor-frontend publish help
+.PHONY: all setup-dev install install-all build start stop test-e2e-bash test-e2e-python test-gpio test-i2c test-spi test-uart test-examples test-all server-dev server-tls frontend-demo validate troubleshoot health-check test-frontend docs-examples clean clean-python logs logs-server monitor-frontend publish help
