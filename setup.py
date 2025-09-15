@@ -4,7 +4,13 @@ Setup script for EDPMT (Electronic Device Protocol Management - Transparent)
 A simplified, secure, universal hardware communication library.
 """
 
-from setuptools import setup, find_packages
+try:
+    from setuptools import setup, find_packages
+except ImportError:
+    print("Error: setuptools is required. Install it with: pip install setuptools")
+    import sys
+    sys.exit(1)
+
 from pathlib import Path
 
 # Read README file

@@ -105,6 +105,9 @@ test-examples:
 test-all: test-e2e-bash test-e2e-python test-gpio test-i2c test-spi test-uart test-examples
 	@echo "🎉 All EDPMT tests complete!"
 
+# Standard test target (alias for test-all)
+test: test-all
+
 # ==============================================================================
 # SERVER OPERATIONS
 # ==============================================================================
