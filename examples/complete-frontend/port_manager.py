@@ -12,7 +12,7 @@ import argparse
 
 try:
     from portkeeper import PortRegistry
-    from dotenv import load_dotenv, set_key
+    from dotenv import load_dotenv
 except ImportError as e:
     print(f"❌ Missing dependency: {e}")
     print("Run: pip install --user --break-system-packages portkeeper python-dotenv")
@@ -27,9 +27,41 @@ class EDPMTPortManager:
         self.registry = PortRegistry()
         self.reservations = {}
         
+        # Create .env if it doesn't exist
+        if not self.env_file.exists():
+            self.env_file.touch()
+        
         # Load existing environment
         if self.env_file.exists():
             load_dotenv(self.env_file)
+    
+    def _update_env_var(self, key: str, value: str):
+        """
+        Update or add a key-value pair in the .env file without adding quotes.
+        This is a workaround for python-dotenv's set_key adding quotes.
+        """
+        lines = []
+        key_found = False
+
+        if self.env_file.exists():
+            with open(self.env_file, 'r') as f:
+                lines = f.readlines()
+
+        with open(self.env_file, 'w') as f:
+            for line in lines:
+                # Preserve comments and empty lines, but don't write the old key
+                if line.strip().startswith('#') or not line.strip():
+                    f.write(line)
+                    continue
+                
+                if line.startswith(f"{key}="):
+                    f.write(f"{key}={value}\n")
+                    key_found = True
+                else:
+                    f.write(line)
+            
+            if not key_found:
+                f.write(f"{key}={value}\n")
     
     def allocate_ports(self, profiles: Dict[str, str]) -> Dict[str, int]:
         """
@@ -65,8 +97,8 @@ class EDPMTPortManager:
                 allocated_ports[profile_name] = allocated_port
                 self.reservations[profile_name] = reservation
                 
-                # Update .env file
-                set_key(self.env_file, env_var, str(allocated_port))
+                # Update .env file using our custom method
+                self._update_env_var(env_var, str(allocated_port))
                 
                 print(f"✅ {profile_name}: {allocated_port} (env: {env_var})")
                 

@@ -325,9 +325,6 @@ class EDPMTApp {
             // Load available projects
             await this.loadProjects();
             
-            // Load templates
-            await this.loadTemplates();
-            
             // Get initial peripheral status
             await this.refreshPeripheralStatus();
             
@@ -375,8 +372,35 @@ class EDPMTApp {
 
     async loadProjects() {
         try {
-            const projects = await this.edpmtClient.listProjects();
-            this.updateProjectsList(projects);
+            const result = await this.edpmtClient.listProjects();
+            const projects = Array.isArray(result) ? result : (result?.projects || []);
+            const listEl = document.getElementById('project-list');
+            if (listEl) {
+                listEl.innerHTML = projects.map(p => `
+                    <div class="project-item" data-name="${(p.name || p.filename || '').replace(/"/g, '&quot;')}">
+                        <div class="project-name">${p.name || p.filename || 'Unnamed Project'}</div>
+                        <div class="project-desc">${p.description || ''}</div>
+                    </div>
+                `).join('');
+                listEl.querySelectorAll('.project-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const name = item.dataset.name;
+                        if (!name) return;
+                        this.edpmtClient.loadProject(name)
+                            .then(project => {
+                                this.currentProject = project;
+                                const nameEl = document.getElementById('project-name');
+                                if (nameEl) nameEl.value = project?.name || name;
+                                this.clearCanvas();
+                                this.addLogEntry('success', `Project '${name}' loaded`);
+                            })
+                            .catch(err => {
+                                console.error('Load project failed:', err);
+                                this.addLogEntry('error', `Failed to load project '${name}': ${err.message}`);
+                            });
+                    });
+                });
+            }
         } catch (error) {
             console.error('❌ Failed to load projects:', error);
             this.addLogEntry('error', 'Failed to load projects');

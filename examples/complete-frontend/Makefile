@@ -125,8 +125,8 @@ port-status:
 	@echo "📊 Current port allocations:"
 	@$(PYTHON) $(PORT_MANAGER) status
 
-# Run in development mode (with hardware simulators and dynamic ports)
-dev: check-deps setup allocate-ports
+# Run in development mode (with hardware simulators and dynamic ports) allocate-ports
+dev: check-deps setup
 	@echo "🚀 Starting EDPMT Complete Frontend (Development Mode)..."
 	@echo "🔧 Using hardware simulators - safe for development"
 	@echo "🎯 Using dynamic port allocation (portkeeper)"
