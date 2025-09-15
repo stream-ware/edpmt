@@ -69,7 +69,7 @@ EDPMT_PROCESSES=$(pgrep -f "edpmt" 2>/dev/null || true)
 if [ ! -z "$EDPMT_PROCESSES" ]; then
     echo "$EDPMT_PROCESSES" | while read pid; do
         if [ ! -z "$pid" ]; then
-            local process_info=$(ps -p "$pid" -o pid,etime,cmd --no-headers 2>/dev/null)
+            process_info=$(ps -p "$pid" -o pid,etime,cmd --no-headers 2>/dev/null)
             echo "   • PID $pid: $process_info"
         fi
     done
@@ -84,7 +84,7 @@ PYTHON_SERVERS=$(pgrep -f "python.*http.server" 2>/dev/null || true)
 if [ ! -z "$PYTHON_SERVERS" ]; then
     echo "$PYTHON_SERVERS" | while read pid; do
         if [ ! -z "$pid" ]; then
-            local process_info=$(ps -p "$pid" -o pid,etime,cmd --no-headers 2>/dev/null)
+            process_info=$(ps -p "$pid" -o pid,etime,cmd --no-headers 2>/dev/null)
             echo "   • PID $pid: $process_info"
         fi
     done
@@ -97,9 +97,9 @@ echo ""
 echo "🌐 Port Overview:"
 for port in 8888 8080 5000 3000; do
     if lsof -Pi :$port -sTCP:LISTEN >/dev/null 2>&1; then
-        local port_info=$(lsof -Pi :$port -sTCP:LISTEN -F p,c,n 2>/dev/null | head -3)
-        local port_pid=$(echo "$port_info" | grep "^p" | cut -c2-)
-        local port_cmd=$(echo "$port_info" | grep "^c" | cut -c2-)
+        port_info=$(lsof -Pi :$port -sTCP:LISTEN -F p,c,n 2>/dev/null | head -3)
+        port_pid=$(echo "$port_info" | grep "^p" | cut -c2-)
+        port_cmd=$(echo "$port_info" | grep "^c" | cut -c2-)
         echo "   • Port $port: ⚠️  In use by $port_cmd (PID: $port_pid)"
     else
         echo "   • Port $port: ✅ Available"
@@ -129,8 +129,8 @@ fi
 echo "📋 Log Files:"
 for log_file in /tmp/edpmt-server.log /tmp/edpmt-visual.log; do
     if [ -f "$log_file" ]; then
-        local size=$(du -h "$log_file" | cut -f1)
-        local lines=$(wc -l < "$log_file")
+        size=$(du -h "$log_file" | cut -f1)
+        lines=$(wc -l < "$log_file")
         echo "   • $log_file: $size ($lines lines)"
     else
         echo "   • $log_file: Not found"

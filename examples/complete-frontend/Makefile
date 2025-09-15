@@ -12,6 +12,7 @@ help:
 	@echo "  make install     - Install dependencies and setup environment"
 	@echo "  make run         - Run complete solution (production mode)"
 	@echo "  make dev         - Run in development mode with simulators"
+	@echo "  make dev-alt     - Run in development mode on alternative ports (8082/8083)"
 	@echo "  make setup       - Create example projects and setup directories"
 	@echo "  make test        - Test the frontend and backend integration"
 	@echo "  make check-deps  - Check if all dependencies are installed"
@@ -29,6 +30,8 @@ PYTHON := python3
 PIP := pip3
 FRONTEND_PORT := 8080
 WEBSOCKET_PORT := 8081
+ALT_FRONTEND_PORT := 8082
+ALT_WEBSOCKET_PORT := 8083
 SERVER_SCRIPT := server.py
 LOG_DIR := logs
 PROJECTS_DIR := projects
@@ -38,19 +41,36 @@ check-deps:
 	@echo "🔍 Checking dependencies..."
 	@$(PYTHON) -c "import asyncio, websockets, json, pathlib" 2>/dev/null || \
 		(echo "❌ Missing Python dependencies. Run 'make install' first." && exit 1)
-	@$(PYTHON) -c "import sys; sys.path.insert(0, '../../..'); import edpmt" 2>/dev/null || \
+	@$(PYTHON) -c "import sys; sys.path.insert(0, '../..'); import edpmt" 2>/dev/null || \
 		(echo "❌ EDPMT not found. Please install EDPMT first." && exit 1)
 	@echo "✅ All dependencies are available"
 
 # Install dependencies
 install:
 	@echo "📦 Installing dependencies..."
-	@$(PIP) install websockets asyncio-mqtt || \
-		(echo "❌ Failed to install Python dependencies" && exit 1)
+	@echo "Checking current environment..."
+	@$(PYTHON) -c "import sys; print('Python:', sys.version)" 
+	@$(PYTHON) -c "import asyncio, websockets, json, pathlib; print('✅ Core dependencies available')" || \
+		(echo "Installing missing dependencies..." && $(PIP) install --user websockets asyncio-mqtt)
+	@echo "🏗️  Checking EDPMT..."
+	@$(PYTHON) -c "import sys; sys.path.insert(0, '../..'); import edpmt; print('✅ EDPMT available')" || \
+		(echo "Installing EDPMT..." && cd ../.. && $(PIP) install --user -e .)
+	@echo "✅ Installation check completed successfully"
+
+# Install using conda (for conda environments)
+install-conda:
+	@echo "📦 Installing dependencies with conda..."
+	@conda install -c conda-forge websockets || echo "websockets already available"
 	@echo "🏗️  Setting up EDPMT..."
-	@cd ../../.. && $(PIP) install -e . || \
-		(echo "❌ Failed to install EDPMT" && exit 1)
-	@echo "✅ Installation completed successfully"
+	@cd ../.. && $(PIP) install -e . || echo "EDPMT already available"
+	@echo "✅ Conda installation completed"
+
+# Skip installation check (when dependencies are already available)
+skip-install:
+	@echo "⏩ Skipping installation - using existing dependencies"
+	@$(PYTHON) -c "import asyncio, websockets, json, pathlib; print('✅ Core dependencies confirmed')"
+	@$(PYTHON) -c "import sys; sys.path.insert(0, '../..'); import edpmt; print('✅ EDPMT confirmed')"
+	@echo "✅ All dependencies confirmed - ready to run!"
 
 # Setup directories and example projects
 setup: check-deps
@@ -97,6 +117,26 @@ dev: check-deps setup
 		--ws-port $(WEBSOCKET_PORT) \
 		--hardware-simulators \
 		--verbose 2>&1 | tee $(LOG_DIR)/server-dev.log
+
+# Run in development mode with alternative ports (avoid conflicts)
+dev-alt: check-deps setup
+	@echo "🚀 Starting EDPMT Complete Frontend (Development Mode - Alternative Ports)..."
+	@echo "📄 Frontend will be available at: http://localhost:$(ALT_FRONTEND_PORT)"
+	@echo "🔌 WebSocket server will run on: ws://localhost:$(ALT_WEBSOCKET_PORT)"
+	@echo "🔧 Using hardware simulators - safe for development"
+	@echo "⚠️  Using alternative ports to avoid conflicts"
+	@echo ""
+	@echo "Quick tips:"
+	@echo "  - Use Ctrl+C to stop the server"
+	@echo "  - All GPIO operations are simulated"
+	@echo "  - Check the browser console for debug info"
+	@echo "  - Logs are saved to $(LOG_DIR)/server.log"
+	@echo ""
+	@$(PYTHON) $(SERVER_SCRIPT) \
+		--http-port $(ALT_FRONTEND_PORT) \
+		--ws-port $(ALT_WEBSOCKET_PORT) \
+		--hardware-simulators \
+		--verbose 2>&1 | tee $(LOG_DIR)/server-dev-alt.log
 
 # Test the complete solution
 test: check-deps

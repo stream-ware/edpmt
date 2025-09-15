@@ -1,0 +1,19 @@
+{
+  "host": "127.0.0.1",
+  "ports": [
+    { "key": "SERVICE_PORT",  "preferred": 8888, "range": [8888, 8988] },
+    { "key": "FRONTEND_PORT", "preferred": 8080, "range": [8080, 8180] }
+  ],
+  "outputs": [
+    { "type": "env", "path": ".env" },
+    { "type": "json", "path": "examples/visual-programming/config.json", "map": {
+      "httpUrl": "https://${SERVICE_HOST:-localhost}:${SERVICE_PORT}",
+      "wsUrl":   "wss://${SERVICE_HOST:-localhost}:${SERVICE_PORT}/ws",
+      "visualUrl": "http://${FRONTEND_HOST:-localhost}:${FRONTEND_PORT}"
+    }},
+    { "type": "runtime_js", "path": "examples/visual-programming/runtime-config.js", "map": {
+      "httpUrl": "https://${SERVICE_HOST:-localhost}:${SERVICE_PORT}",
+      "wsUrl":   "wss://${SERVICE_HOST:-localhost}:${SERVICE_PORT}/ws"
+    }}
+  ]
+}

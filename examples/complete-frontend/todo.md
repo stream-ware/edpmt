@@ -3,6 +3,11 @@ stworz prosty frotnend do bezposredniego uzywania wszystkich peryfierow z EDMPT,
 zadbaj o latwosc uzycia, aby frontwend mial tez menu z mozliwoscia podgladu blokow za pomoca popoup i edycji za pomoca popup kazdej logiki <zaimplementowanej w ten sposob jak w /home/tom/github/stream-ware/edpmt/examples/visual-programming/projects/*
 chodzi o mozliwosc edycji logiki, ktora odpowiada za widok, pozwol na edytownaie rowniez samej strony www na frontendzie z mozliwoscia zapisu
 
+
+uzyj do rpzydzielania portu do aplikacji tej paczki: portkeeper
+dodatkowo stworz plik .env do wszystkich globalnych zmiennych i uzywaj tam tez portow, ktore beda przydzielane z portkeeper oraz uzyj tez paczki bezposrednio w makefile jak tutaj: python3 -m http.server $(portkeeper port --profile service)
+
+
 ### ✅ **Dynamic Flow Generator Created:**
 
 **[flow-generator.js](cci:7://file:///home/tom/github/stream-ware/edpmt/examples/visual-programming/flow-generator.js:0:0-0:0) - Complete Library Features:**

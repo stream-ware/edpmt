@@ -63,6 +63,26 @@ venv-setup:
 	@echo "💡 Then run: edpmt server --dev"
 
 # ==============================================================================
+# PRE-FLIGHT (DYNAMIC PORTS)
+# ==============================================================================
+
+.PHONY: preflight
+preflight: ## Reserve ports and update .env/config via PortKeeper (pk.config.json)
+	@echo "🧩 Preflighting ports via PortKeeper..."
+	@if command -v portkeeper >/dev/null 2>&1; then \
+		if [ -f pk.config.json ]; then \
+			portkeeper prepare --config pk.config.json; \
+			echo "✅ Preflight done"; \
+		else \
+			echo "ℹ️ pk.config.json not found. Create one in project root to use preflight."; \
+			echo "   Example: see PortKeeper README (prepare section)."; \
+		fi; \
+	else \
+		echo "❌ PortKeeper CLI not found. Install it and re-run: pip install -e ../dynapsys/portkeeper"; \
+		exit 1; \
+	fi
+
+# ==============================================================================
 # DOCKER OPERATIONS
 # ==============================================================================
 
@@ -267,6 +287,9 @@ help:
 	@echo "  make start          - Start EDPMT environment"
 	@echo "  make stop           - Stop environment"
 	@echo ""
+	@echo "Pre-flight (Dynamic Ports):"
+	@echo "  make preflight      - Reserve ports and update .env/config via PortKeeper (pk.config.json)"
+	@echo ""
 	@echo "Testing:"
 	@echo "  make test-e2e-bash  - Run E2E tests with bash/curl"
 	@echo "  make test-e2e-python- Run E2E tests with Python"
@@ -305,7 +328,7 @@ help:
 	@echo "  make publish        - Publish to PyPI"
 
 # === ALL SERVICES MANAGEMENT ===
-.PHONY: start stop status logs restart
+.PHONY: start stop status logs restart preflight
 
 start: ## Start all EDPMT services (server + visual programming interface)
 	@chmod +x scripts/start-all.sh
@@ -338,4 +361,4 @@ logs: ## View logs from all services
 
 restart: stop start ## Restart all EDPMT services
 
-.PHONY: all setup-dev install install-all build start stop test-e2e-bash test-e2e-python test-gpio test-i2c test-spi test-uart test-examples test-all server-dev server-dev-sim server-tls frontend-demo validate troubleshoot health-check test-frontend docs-examples clean clean-python logs logs-server monitor-frontend publish help
+.PHONY: all setup-dev install install-all build start stop test-e2e-bash test-e2e-python test-gpio test-i2c test-spi test-uart test-examples test-all server-dev server-dev-sim server-tls frontend-demo validate troubleshoot health-check test-frontend docs-examples clean clean-python logs logs-server monitor-frontend publish help preflight

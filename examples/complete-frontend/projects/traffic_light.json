@@ -1,196 +1,121 @@
 {
   "name": "Traffic Light",
-  "description": "Three-LED traffic light sequence with realistic timing",
-  "version": "1.0",
+  "description": "Three-LED traffic light sequence",
   "blocks": [
     {
-      "id": "start_1",
       "type": "start",
-      "position": { "x": 50, "y": 150 },
-      "params": {
-        "auto_start": true
-      }
+      "position": {
+        "x": 50,
+        "y": 50
+      },
+      "params": {}
     },
     {
-      "id": "main_loop",
       "type": "loop",
-      "position": { "x": 200, "y": 150 },
+      "position": {
+        "x": 200,
+        "y": 50
+      },
       "params": {
-        "count": 0,
         "infinite": true
       }
     },
     {
-      "id": "red_on",
       "type": "gpio-output",
-      "position": { "x": 350, "y": 80 },
+      "position": {
+        "x": 350,
+        "y": 30
+      },
       "params": {
         "pin": 18,
-        "value": "1",
-        "duration": 0
+        "value": "1"
       }
     },
     {
-      "id": "red_delay",
       "type": "delay",
-      "position": { "x": 500, "y": 80 },
+      "position": {
+        "x": 500,
+        "y": 30
+      },
       "params": {
-        "duration": 5000
+        "duration": 3000
       }
     },
     {
-      "id": "red_off",
       "type": "gpio-output",
-      "position": { "x": 650, "y": 80 },
+      "position": {
+        "x": 650,
+        "y": 30
+      },
       "params": {
         "pin": 18,
-        "value": "0",
-        "duration": 0
+        "value": "0"
       }
     },
     {
-      "id": "yellow_on",
       "type": "gpio-output",
-      "position": { "x": 350, "y": 150 },
+      "position": {
+        "x": 350,
+        "y": 70
+      },
       "params": {
         "pin": 19,
-        "value": "1",
-        "duration": 0
+        "value": "1"
       }
     },
     {
-      "id": "yellow_delay",
       "type": "delay",
-      "position": { "x": 500, "y": 150 },
+      "position": {
+        "x": 500,
+        "y": 70
+      },
       "params": {
-        "duration": 2000
+        "duration": 1000
       }
     },
     {
-      "id": "yellow_off",
       "type": "gpio-output",
-      "position": { "x": 650, "y": 150 },
+      "position": {
+        "x": 650,
+        "y": 70
+      },
       "params": {
         "pin": 19,
-        "value": "0",
-        "duration": 0
+        "value": "0"
       }
     },
     {
-      "id": "green_on",
       "type": "gpio-output",
-      "position": { "x": 350, "y": 220 },
+      "position": {
+        "x": 350,
+        "y": 110
+      },
       "params": {
         "pin": 20,
-        "value": "1",
-        "duration": 0
+        "value": "1"
       }
     },
     {
-      "id": "green_delay",
       "type": "delay",
-      "position": { "x": 500, "y": 220 },
+      "position": {
+        "x": 500,
+        "y": 110
+      },
       "params": {
-        "duration": 8000
+        "duration": 3000
       }
     },
     {
-      "id": "green_off",
       "type": "gpio-output",
-      "position": { "x": 650, "y": 220 },
+      "position": {
+        "x": 650,
+        "y": 110
+      },
       "params": {
         "pin": 20,
-        "value": "0",
-        "duration": 0
-      }
-    },
-    {
-      "id": "log_cycle",
-      "type": "log",
-      "position": { "x": 800, "y": 150 },
-      "params": {
-        "message": "Traffic light cycle completed",
-        "level": "info"
+        "value": "0"
       }
     }
   ],
-  "connections": [
-    {
-      "id": "conn_1",
-      "from": { "blockId": "start_1", "output": "trigger" },
-      "to": { "blockId": "main_loop", "input": "trigger" }
-    },
-    {
-      "id": "conn_2",
-      "from": { "blockId": "main_loop", "output": "iteration" },
-      "to": { "blockId": "red_on", "input": "trigger" }
-    },
-    {
-      "id": "conn_3",
-      "from": { "blockId": "red_on", "output": "complete" },
-      "to": { "blockId": "red_delay", "input": "trigger" }
-    },
-    {
-      "id": "conn_4",
-      "from": { "blockId": "red_delay", "output": "complete" },
-      "to": { "blockId": "red_off", "input": "trigger" }
-    },
-    {
-      "id": "conn_5",
-      "from": { "blockId": "red_off", "output": "complete" },
-      "to": { "blockId": "yellow_on", "input": "trigger" }
-    },
-    {
-      "id": "conn_6",
-      "from": { "blockId": "yellow_on", "output": "complete" },
-      "to": { "blockId": "yellow_delay", "input": "trigger" }
-    },
-    {
-      "id": "conn_7",
-      "from": { "blockId": "yellow_delay", "output": "complete" },
-      "to": { "blockId": "yellow_off", "input": "trigger" }
-    },
-    {
-      "id": "conn_8",
-      "from": { "blockId": "yellow_off", "output": "complete" },
-      "to": { "blockId": "green_on", "input": "trigger" }
-    },
-    {
-      "id": "conn_9",
-      "from": { "blockId": "green_on", "output": "complete" },
-      "to": { "blockId": "green_delay", "input": "trigger" }
-    },
-    {
-      "id": "conn_10",
-      "from": { "blockId": "green_delay", "output": "complete" },
-      "to": { "blockId": "green_off", "input": "trigger" }
-    },
-    {
-      "id": "conn_11",
-      "from": { "blockId": "green_off", "output": "complete" },
-      "to": { "blockId": "log_cycle", "input": "trigger" }
-    }
-  ],
-  "hardware": [
-    {
-      "type": "gpio",
-      "pin": 18,
-      "mode": "output",
-      "description": "Red LED"
-    },
-    {
-      "type": "gpio",
-      "pin": 19,
-      "mode": "output",
-      "description": "Yellow LED"
-    },
-    {
-      "type": "gpio",
-      "pin": 20,
-      "mode": "output",
-      "description": "Green LED"
-    }
-  ],
-  "created_at": "2024-01-01T00:00:00Z",
-  "updated_at": "2024-01-01T00:00:00Z"
+  "version": "1.0"
 }
