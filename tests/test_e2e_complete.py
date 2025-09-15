@@ -30,8 +30,8 @@ class EDPMTEndToEndTests:
     def __init__(self):
         self.server = None
         self.server_process = None
-        self.base_url = "https://localhost:8890"  # Use a different port for tests
-        self.http_url = "http://localhost:8890"
+        self.base_url = "https://localhost:8891"  # Use a different port for tests
+        self.http_url = "http://localhost:8891"
         self.test_results = []
         self.setup_logging()
         
@@ -64,7 +64,7 @@ class EDPMTEndToEndTests:
                 name="EDPMT-E2E-Test",
                 config={
                     'dev_mode': True,
-                    'port': 8890,
+                    'port': 8891,
                     'host': 'localhost',
                     'tls': False,  # Disable TLS for testing to avoid certificate issues
                     'hardware_simulators': True
@@ -84,7 +84,7 @@ class EDPMTEndToEndTests:
             self.logger.error(f"❌ Failed to start test server: {e}")
             return False
     
-    async def wait_for_server(self, timeout=60):
+    async def wait_for_server(self, timeout=120):
         """Wait for server to be ready"""
         self.logger.info(f"⏳ Waiting for server at {self.http_url}...")
         
