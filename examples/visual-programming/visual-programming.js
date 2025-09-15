@@ -82,12 +82,31 @@ class VisualProgramming {
     }
 
     handleDragStart(e) {
+        // Find the actual draggable block element
+        const blockElement = e.target.closest('.block[draggable="true"]');
+        if (!blockElement) {
+            console.error('No draggable block found');
+            return;
+        }
+        
         const blockData = {
-            type: e.target.dataset.type,
-            html: e.target.outerHTML
+            type: blockElement.dataset.type,
+            html: blockElement.outerHTML
         };
-        e.dataTransfer.setData('text/plain', JSON.stringify(blockData));
-        e.target.classList.add('dragging');
+        
+        try {
+            const jsonData = JSON.stringify(blockData);
+            e.dataTransfer.setData('text/plain', jsonData);
+            e.dataTransfer.setData('application/json', jsonData);
+            blockElement.classList.add('dragging');
+            
+            // Remove dragging class after drag ends
+            setTimeout(() => {
+                blockElement.classList.remove('dragging');
+            }, 100);
+        } catch (error) {
+            console.error('Error setting drag data:', error);
+        }
     }
 
     handleDragOver(e) {
@@ -99,11 +118,26 @@ class VisualProgramming {
         e.preventDefault();
         this.canvas.classList.remove('drag-over');
         
+        // Try multiple data formats
+        let dataString = e.dataTransfer.getData('application/json') || 
+                        e.dataTransfer.getData('text/plain') || 
+                        e.dataTransfer.getData('text');
+        
+        if (!dataString || dataString.trim() === '') {
+            console.warn('No drag data received');
+            return;
+        }
+        
         try {
-            const blockData = JSON.parse(e.dataTransfer.getData('text/plain'));
-            this.addBlockToCanvas(blockData);
+            const blockData = JSON.parse(dataString);
+            if (blockData && blockData.type && blockData.html) {
+                this.addBlockToCanvas(blockData);
+            } else {
+                console.error('Invalid block data structure:', blockData);
+            }
         } catch (error) {
             console.error('Error parsing dropped data:', error);
+            console.log('Raw data received:', dataString);
         }
     }
 
@@ -639,14 +673,22 @@ class VisualProgramming {
     }
 }
 
-// Initialize when DOM is loaded
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
+// Initialize when DOM is loaded and ensure global availability
+function initializeVisualProgramming() {
+    if (!window.visualProgramming) {
         window.visualProgramming = new VisualProgramming();
-    });
+        // Make it available for debugging
+        console.log('✅ VisualProgramming initialized globally');
+    }
+    return window.visualProgramming;
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeVisualProgramming);
 } else {
-    window.visualProgramming = new VisualProgramming();
+    initializeVisualProgramming();
 }
 
 // Export for ES6 module compatibility
 export default VisualProgramming;
+export { initializeVisualProgramming };

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LED Blink - EDPMT Visual Blocks (Dynamic)</title>
+    <title>Traffic Light - EDPMT Visual Blocks (Dynamic)</title>
     <style>
         body { 
             font-family: 'Segoe UI', sans-serif; 
@@ -30,7 +30,7 @@
     </style>
 </head>
 <body>
-    <div id="loading">⚡ Loading LED Blink project dynamically from JSON...</div>
+    <div id="loading">🚦 Loading Traffic Light project dynamically from JSON...</div>
     <div id="error" style="display: none;"></div>
     <div id="dynamic-content"></div>
     
@@ -42,22 +42,22 @@
                 console.log('🔧 Initializing FlowGenerator...');
                 const generator = new FlowGenerator();
                 
-                console.log('📂 Loading LED Blink project from JSON...');
-                const html = await generator.generateProjectPage('led-blink', '../projects/led-blink.json');
+                console.log('📂 Loading Traffic Light project from JSON...');
+                const html = await generator.generateProjectPage('traffic-light', '../projects/traffic-light.json');
                 
                 // Hide loading and show content
                 document.getElementById('loading').style.display = 'none';
                 document.body.innerHTML = html;
                 
-                console.log('✅ LED Blink project loaded and rendered dynamically from JSON!');
+                console.log('✅ Traffic Light project loaded and rendered dynamically from JSON!');
             } catch (error) {
                 console.error('❌ Error loading project:', error);
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('error').style.display = 'block';
                 document.getElementById('error').innerHTML = `
                     <h2>❌ Error Loading Project</h2>
-                    <p><strong>Could not load led-blink.json:</strong> ${error.message}</p>
-                    <p>Make sure the project file exists at: <code>../projects/led-blink.json</code></p>
+                    <p><strong>Could not load traffic-light.json:</strong> ${error.message}</p>
+                    <p>Make sure the project file exists at: <code>../projects/traffic-light.json</code></p>
                     <p>Also check that <code>flow-generator.js</code> is properly loaded.</p>
                     <details>
                         <summary>Technical Details</summary>

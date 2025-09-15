@@ -3,8 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sensor Monitor - EDPMT Visual Blocks</title>
+    <title>Sensor Monitor - EDPMT Visual Blocks (Dynamic)</title>
     <style>
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        #loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 18px;
+            color: white;
+        }
+        #error {
+            text-align: center;
+            padding: 30px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 8px;
+            margin: 20px auto;
+            max-width: 600px;
+            color: #d32f2f;
+        }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
         .standalone-container { max-width: 1200px; margin: 0 auto; background: rgba(255,255,255,0.95); border-radius: 10px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
         .standalone-header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #eee; }
@@ -36,6 +58,52 @@
     </style>
 </head>
 <body>
+    <div id="loading">📊 Loading Sensor Monitor project dynamically from JSON...</div>
+    <div id="error" style="display: none;"></div>
+    <div id="dynamic-content"></div>
+    
+    <script type="module">
+        import FlowGenerator from '../flow-generator.js';
+        
+        async function loadAndRenderProject() {
+            try {
+                console.log('🔧 Initializing FlowGenerator...');
+                const generator = new FlowGenerator();
+                
+                console.log('📂 Loading Sensor Monitor project from JSON...');
+                const html = await generator.generateProjectPage('sensor-monitor', '../projects/sensor-monitor.json');
+                
+                // Hide loading and show content
+                document.getElementById('loading').style.display = 'none';
+                document.body.innerHTML = html;
+                
+                console.log('✅ Sensor Monitor project loaded and rendered dynamically from JSON!');
+            } catch (error) {
+                console.error('❌ Error loading project:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').innerHTML = `
+                    <h2>❌ Error Loading Project</h2>
+                    <p><strong>Could not load sensor-monitor.json:</strong> ${error.message}</p>
+                    <p>Make sure the project file exists at: <code>../projects/sensor-monitor.json</code></p>
+                    <p>Also check that <code>flow-generator.js</code> is properly loaded.</p>
+                    <details>
+                        <summary>Technical Details</summary>
+                        <pre>${error.stack}</pre>
+                    </details>
+                `;
+            }
+        }
+        
+        // Load when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadAndRenderProject);
+        } else {
+            loadAndRenderProject();
+        }
+    </script>
+</body>
+</html>
     <div class="standalone-container">
         <header class="standalone-header">
             <h1>🎨 EDPMT Visual Programming</h1>

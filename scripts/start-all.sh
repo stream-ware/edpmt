@@ -73,7 +73,7 @@ pkill -f "edpmt.*server" 2>/dev/null || true
 pkill -f "python.*http.server" 2>/dev/null || true
 sleep 2
 
-# Find available ports (prefer PortKeeper)
+# Generic hosts (prefer localhost)
 SERVICE_HOST="127.0.0.1"
 FRONTEND_HOST="127.0.0.1"
 
@@ -81,30 +81,21 @@ FRONTEND_HOST="127.0.0.1"
 if command -v portkeeper >/dev/null 2>&1 && [ -f pk.config.json ]; then
     echo "🧩 Preflight: portkeeper prepare --config pk.config.json"
     portkeeper prepare --config pk.config.json || true
-    # Load env to pick up SERVICE_PORT/FRONTEND_PORT if set
-    if [ -f .env ]; then set -a; . ./.env; set +a; fi
 fi
 
-# If FRONTEND_PORT wasn't set by preflight, reserve it now (generic key)
-FRONTEND_PORT="${FRONTEND_PORT:-$(reserve_port 8080 8080 8180 FRONTEND_PORT "$FRONTEND_HOST")}" 
-
-# Persist/complete backend env (generic keys)
+# Persist/complete env (generic keys)
 if [ ! -f .env ]; then
     touch .env
 fi
 grep -q '^SERVICE_HOST=' .env 2>/dev/null || echo "SERVICE_HOST=$SERVICE_HOST" >> .env
-grep -q '^FRONTEND_PORT=' .env 2>/dev/null || echo "FRONTEND_PORT=$FRONTEND_PORT" >> .env
 grep -q '^FRONTEND_HOST=' .env 2>/dev/null || echo "FRONTEND_HOST=$FRONTEND_HOST" >> .env
 
-echo "📡 Using (preflight) ports:"
-echo "   • Service (backend): ${SERVICE_HOST}:${SERVICE_PORT:-?}"
-echo "   • Frontend (UI):     ${FRONTEND_HOST}:${FRONTEND_PORT}"
+echo "📡 Preparing to start services..."
+echo "   • Backend host: $SERVICE_HOST"
+echo "   • Frontend host: $FRONTEND_HOST"
 
-# Create PID file directory
-mkdir -p /tmp/edpmt-pids
-
-# Start EDPMT server in background
-echo "🌐 Starting Service (EDPMT) with auto-port..."
+# Start service (EDPMT) with auto-port
+echo "🌐 Starting EDPMT server with auto-port..."
 cd "$(dirname "$0")/.."
 
 nohup edpmt server --dev --host "$SERVICE_HOST" --auto-port > /tmp/edpmt-server.log 2>&1 &
@@ -122,69 +113,81 @@ if ! kill -0 $EDPMT_PID 2>/dev/null; then
     exit 1
 fi
 
-# Read SERVICE_PORT written by server into .env (wait until available)
-SERVICE_PORT="${SERVICE_PORT:-}"
+# Read EDPMT_PORT written by server into .env (wait until available)
+EDPMT_PORT=""
 for i in {1..20}; do
-  if grep -q '^SERVICE_PORT=' .env 2>/dev/null; then
-    SERVICE_PORT=$(grep '^SERVICE_PORT=' .env | cut -d= -f2)
-    if [ -n "$SERVICE_PORT" ]; then break; fi
-  fi
-  # Backward-compat alias
   if grep -q '^EDPMT_PORT=' .env 2>/dev/null; then
-    SERVICE_PORT=$(grep '^EDPMT_PORT=' .env | cut -d= -f2)
-    if [ -n "$SERVICE_PORT" ]; then break; fi
+    EDPMT_PORT=$(grep '^EDPMT_PORT=' .env | cut -d= -f2)
+    if [ -n "$EDPMT_PORT" ]; then break; fi
+  fi
+  # Generic alias support
+  if grep -q '^SERVICE_PORT=' .env 2>/dev/null; then
+    EDPMT_PORT=$(grep '^SERVICE_PORT=' .env | cut -d= -f2)
+    if [ -n "$EDPMT_PORT" ]; then break; fi
   fi
   sleep 0.3
 done
-if [ -z "$SERVICE_PORT" ]; then
-  echo "❌ Failed to read SERVICE_PORT from .env after starting server"
+if [ -z "$EDPMT_PORT" ]; then
+  echo "❌ Failed to read EDPMT_PORT from .env after starting server"
   tail -n 20 /tmp/edpmt-server.log || true
   exit 1
 fi
 
 echo "📡 Using ports:"
-echo "   • Service (backend): ${SERVICE_HOST}:${SERVICE_PORT}"
-echo "   • Frontend (UI):     ${FRONTEND_HOST}:${FRONTEND_PORT}"
+echo "   • EDPMT Server: $SERVICE_HOST:$EDPMT_PORT"
+echo "   • Visual Programming: $FRONTEND_HOST:8080"
 
-# Start Frontend (static UI)
-echo "🎨 Starting Frontend on port $FRONTEND_PORT..."
+echo "🎨 Starting Visual Programming Interface..."
 cd examples/visual-programming
 
-# Inject runtime-config.js for the frontend (generic window.RUNTIME + alias)
+# Prepare runtime-config.js (generic) for backend now
 cat > runtime-config.js << EOF
 // Runtime configuration injected by start-all.sh
 window.RUNTIME = {
-    httpUrl: 'https://localhost:$SERVICE_PORT',
-    wsUrl: 'wss://localhost:$SERVICE_PORT/ws'
+    httpUrl: 'https://localhost:$EDPMT_PORT',
+    wsUrl: 'wss://localhost:$EDPMT_PORT/ws'
 };
 // Backward compatibility alias
 window.EDPMT_RUNTIME = window.RUNTIME;
 EOF
 
+# Prefer PortKeeper to run the frontend on a coordinated port; fallback to static port
+if command -v portkeeper >/dev/null 2>&1; then
+  nohup portkeeper run --profile frontend \
+    --env-key VISUAL_PORT \
+    --write-env VISUAL_PORT \
+    --env-path ../../.env \
+    -- python3 -m http.server {PORT} > /tmp/edpmt-visual.log 2>&1 &
+else
+  nohup python3 -m http.server 8080 > /tmp/edpmt-visual.log 2>&1 &
+fi
+
+VISUAL_PID=$!
+echo $VISUAL_PID > /tmp/edpmt-pids/visual.pid
+
+# Wait for visual interface to start and VISUAL_PORT to be known (PortKeeper writes it to .env)
+if command -v portkeeper >/dev/null 2>&1; then
+  for i in {1..40}; do
+    if grep -q '^VISUAL_PORT=' ../../.env 2>/dev/null; then
+      VISUAL_PORT=$(grep '^VISUAL_PORT=' ../../.env | cut -d= -f2)
+      if [ -n "$VISUAL_PORT" ]; then break; fi
+    fi
+    sleep 0.2
+  done
+else
+  sleep 2
+fi
+
 # Also write config.json for consumers/tools that expect JSON
 cat > config.json << EOF
 {
-  "httpUrl": "https://localhost:$SERVICE_PORT",
-  "wsUrl": "wss://localhost:$SERVICE_PORT/ws",
-  "visualUrl": "http://localhost:$FRONTEND_PORT"
+  "httpUrl": "https://localhost:$EDPMT_PORT",
+  "wsUrl": "wss://localhost:$EDPMT_PORT/ws",
+  "visualUrl": "http://localhost:${VISUAL_PORT:-8080}"
 }
 EOF
 
 echo "🔄 Updated frontend configuration (runtime-config.js and config.json)"
-
-nohup python3 -m http.server $FRONTEND_PORT > /tmp/edpmt-visual.log 2>&1 &
-VISUAL_PID=$!
-echo $VISUAL_PID > /tmp/edpmt-pids/visual.pid
-
-# Wait for visual interface to start
-sleep 2
-
-# Check if visual interface started successfully
-if ! kill -0 $VISUAL_PID 2>/dev/null; then
-    echo "❌ Visual Programming Interface failed to start. Check logs:"
-    tail -n 10 /tmp/edpmt-visual.log
-    exit 1
-fi
 
 echo ""
 echo "✅ All services started successfully!"
@@ -194,13 +197,13 @@ echo "║                    EDPMT Services Running                    ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo ""
 echo "🌐 Service (Backend):"
-echo "   • URL: https://localhost:$SERVICE_PORT"
-echo "   • API: https://localhost:$SERVICE_PORT/api/execute"
-echo "   • WebSocket: wss://localhost:$SERVICE_PORT/ws"
+echo "   • URL: https://localhost:$EDPMT_PORT"
+echo "   • API: https://localhost:$EDPMT_PORT/api/execute"
+echo "   • WebSocket: wss://localhost:$EDPMT_PORT/ws"
 echo "   • PID: $EDPMT_PID"
 echo ""
 echo "🎨 Frontend:"
-echo "   • URL: http://localhost:$FRONTEND_PORT"
+echo "   • URL: http://localhost:$VISUAL_PORT"
 echo "   • Interface: Drag & Drop Blocks"
 echo "   • PID: $VISUAL_PID"
 echo ""
@@ -210,14 +213,14 @@ echo "   • View logs: make logs"
 echo "   • Check status: make status"
 echo ""
 echo "🔗 Quick access:"
-echo "   • Open Frontend: http://localhost:$FRONTEND_PORT"
-echo "   • Server connects to: wss://localhost:$SERVICE_PORT/ws"
+echo "   • Open Frontend: http://localhost:$VISUAL_PORT"
+echo "   • Server connects to: wss://localhost:$EDPMT_PORT/ws"
 echo ""
 
 # Save port configuration for other scripts
 cat > /tmp/edpmt-pids/config.env << EOF
-SERVICE_PORT=$SERVICE_PORT
-FRONTEND_PORT=$FRONTEND_PORT
+SERVICE_PORT=$EDPMT_PORT
+FRONTEND_PORT=$VISUAL_PORT
 EDPMT_PID=$EDPMT_PID
 VISUAL_PID=$VISUAL_PID
 # Backward-compat aliases
