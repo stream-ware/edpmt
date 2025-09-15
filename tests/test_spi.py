@@ -33,7 +33,8 @@ class TestSPI:
                 'port': 8879,
                 'host': 'localhost',
                 'tls': True,
-                'hardware_simulators': True
+                'hardware_simulators': True,
+                'ipc_path': '/tmp/edpmt_spi_test.sock'
             }
         )
         
@@ -46,8 +47,12 @@ class TestSPI:
         yield server, client
         
         # Cleanup
-        await client.close()
-        await server.close()
+        if hasattr(client, 'close'):
+            await client.close()
+        if hasattr(server, 'stop'):
+            await server.stop()
+        elif hasattr(server, 'close'):
+            await server.close()
         server_task.cancel()
         try:
             await server_task
@@ -418,8 +423,12 @@ async def run_spi_tests():
             failed += 1
     
     # Cleanup
-    await client.close()
-    await server.close()
+    if hasattr(client, 'close'):
+        await client.close()
+    if hasattr(server, 'stop'):
+        await server.stop()
+    elif hasattr(server, 'close'):
+        await server.close()
     server_task.cancel()
     try:
         await server_task

@@ -32,7 +32,8 @@ class TestI2C:
                 'port': 8878,
                 'host': 'localhost',
                 'tls': True,
-                'hardware_simulators': True
+                'hardware_simulators': True,
+                'ipc_path': '/tmp/edpmt_i2c_test.sock'
             }
         )
         
@@ -45,8 +46,12 @@ class TestI2C:
         yield server, client
         
         # Cleanup
-        await client.close()
-        await server.close()
+        if hasattr(client, 'close'):
+            await client.close()
+        if hasattr(server, 'stop'):
+            await server.stop()
+        elif hasattr(server, 'close'):
+            await server.close()
         server_task.cancel()
         try:
             await server_task
@@ -310,8 +315,12 @@ async def run_i2c_tests():
             failed += 1
     
     # Cleanup
-    await client.close()
-    await server.close()
+    if hasattr(client, 'close'):
+        await client.close()
+    if hasattr(server, 'stop'):
+        await server.stop()
+    elif hasattr(server, 'close'):
+        await server.close()
     server_task.cancel()
     try:
         await server_task
