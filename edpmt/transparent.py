@@ -91,72 +91,42 @@ class EDPMTransparent:
         self.logger.info(f"Transport: {self.transport_type.value}, TLS: {self.tls_enabled}")
 
         # Hardware interfaces will be initialized dynamically
-        self.hardware_interfaces = {}
+        self.hardware_interfaces = None
+        self.hardware_future = None
         self._initialize_hardware()
 
     def _initialize_hardware(self):
-        """Initialize hardware interfaces using the factory pattern."""
+        """Initialize hardware interfaces with fallback to simulators based on config."""
+        import asyncio
         from .hardware.factory import HardwareInterfaceFactory
-        loop = asyncio.get_event_loop()
-        self.hardware_interfaces = loop.run_until_complete(
+        self.use_simulators = self.config.get('hardware_simulators', False)
+        self.logger.info(f"Initializing hardware interfaces (simulators: {self.use_simulators})")
+        # Use ensure_future to run the coroutine in the existing event loop
+        self.hardware_future = asyncio.ensure_future(
             HardwareInterfaceFactory.create_all_interfaces(use_simulators=self.use_simulators, config=self.config)
         )
-        for hw_type, hw_interface in self.hardware_interfaces.items():
-            self.logger.info(f"Hardware interface {hw_type.upper()} initialized: {hw_interface.name}")
+        # Since we're in __init__ and might not be in an async context, we'll handle this in start_server
+        self.logger.info("Hardware initialization scheduled")
 
-    async def execute(self, action: str, target: str, **params) -> Any:
-        """
-        Execute any action on any target - single universal method
-        
-        Examples:
-            await edpm.execute('set', 'gpio', pin=17, value=1)
-            await edpm.execute('read', 'i2c', device=0x76)
-            await edpm.execute('play', 'audio', frequency=440)
-        """
-        # Validate action and target
-        valid_actions = ['set', 'get', 'read', 'write', 'scan', 'transfer', 'pwm', 'play', 'list', 'connect', 'disconnect', 'send', 'receive', 'configure', 'record']
-        valid_targets = list(self.hardware_interfaces.keys()) + ['audio']
-        
-        if action not in valid_actions:
-            self.logger.warning(f"Invalid action requested: {action}")
-            return {"success": False, "error": f"Invalid action: {action}. Valid actions are {valid_actions}"}
-        
-        if target not in valid_targets:
-            self.logger.warning(f"Invalid target requested: {target}")
-            return {"success": False, "error": f"Invalid target: {target}. Valid targets are {valid_targets}"}
-        
-        message = Message(action=action, target=target, params=params)
-        
-        # Log the request
-        self.logger.info(f"Executing: {message.action} {message.target} {message.params}")
-        self.stats.messages_received += 1
-
-        try:
-            # Route to appropriate hardware interface
-            if target in self.hardware_interfaces:
-                result = await self.hardware_interfaces[target].execute(action, **params)
-                self.stats.messages_sent += 1
-                return {"success": True, "result": result, "id": message.id}
-            else:
-                # Handle non-hardware targets or future extensions
-                self.stats.errors += 1
-                return {"success": False, "error": f"Target {target} not implemented", "id": message.id}
-        except Exception as e:
-            # Log error and return structured response
-            self.logger.error(f"Error executing {message.action} on {message.target}: {e}")
-            self.stats.errors += 1
-            return {"success": False, "error": str(e), "id": message.id}
-
-    # === Server Mode ===
-    
     async def start_server(self):
-        """Start EDPM server based on transport type"""
+        """Start the appropriate server based on transport type."""
+        if not self.hardware_interfaces and self.hardware_future:
+            self.logger.info("Completing hardware initialization before starting server")
+            try:
+                self.hardware_interfaces = await self.hardware_future
+                self.logger.info(f"Initialized hardware interfaces: {list(self.hardware_interfaces.keys())}")
+            except Exception as e:
+                self.logger.error(f"Failed to initialize hardware interfaces: {e}")
+                self.hardware_interfaces = {}
+                self.logger.warning("Continuing without hardware interfaces")
         if self.transport_type == TransportType.LOCAL:
             await self._start_ipc_server()
         elif self.transport_type == TransportType.NETWORK:
             await self._start_network_server()
         elif self.transport_type == TransportType.BROWSER:
             await self._start_websocket_server()
+        else:
+            raise ValueError(f"Unsupported transport type: {self.transport_type}")
 
     async def _start_network_server(self):
         """Start network server with optional TLS"""
@@ -227,6 +197,51 @@ class EDPMTransparent:
         # For browser mode, use network server with WebSocket support
         await self._start_network_server()
 
+    async def execute(self, action: str, target: str, **params) -> Any:
+        """
+        Execute any action on any target - single universal method
+        
+        Examples:
+            await edpm.execute('set', 'gpio', pin=17, value=1)
+            await edpm.execute('read', 'i2c', device=0x76)
+            await edpm.execute('play', 'audio', frequency=440)
+        """
+        # Validate action and target
+        valid_actions = ['set', 'get', 'read', 'write', 'scan', 'transfer', 'pwm', 'play', 'list', 'connect', 'disconnect', 'send', 'receive', 'configure', 'record']
+        valid_targets = list(self.hardware_interfaces.keys()) + ['audio']
+        
+        if action not in valid_actions:
+            self.logger.warning(f"Invalid action requested: {action}")
+            return {"success": False, "error": f"Invalid action: {action}. Valid actions are {valid_actions}"}
+        
+        if target not in valid_targets:
+            self.logger.warning(f"Invalid target requested: {target}")
+            return {"success": False, "error": f"Invalid target: {target}. Valid targets are {valid_targets}"}
+        
+        message = Message(action=action, target=target, params=params)
+        
+        # Log the request
+        self.logger.info(f"Executing: {message.action} {message.target} {message.params}")
+        self.stats.messages_received += 1
+
+        try:
+            # Route to appropriate hardware interface
+            if target in self.hardware_interfaces:
+                result = await self.hardware_interfaces[target].execute(action, **params)
+                self.stats.messages_sent += 1
+                return {"success": True, "result": result, "id": message.id}
+            else:
+                # Handle non-hardware targets or future extensions
+                self.stats.errors += 1
+                return {"success": False, "error": f"Target {target} not implemented", "id": message.id}
+        except Exception as e:
+            # Log error and return structured response
+            self.logger.error(f"Error executing {message.action} on {message.target}: {e}")
+            self.stats.errors += 1
+            return {"success": False, "error": str(e), "id": message.id}
+
+    # === Server Mode ===
+    
     async def _handle_http_request(self, request):
         """Handle HTTP API requests"""
         from aiohttp import web
@@ -316,6 +331,19 @@ class EDPMTransparent:
         from .web_ui import get_web_ui
         
         return web.Response(text=get_web_ui(), content_type='text/html')
+
+    async def shutdown(self):
+        """Shut down the server and clean up resources."""
+        self.logger.info("Shutting down EDPM Transparent server")
+        if self.hardware_interfaces:
+            for interface_name, interface in self.hardware_interfaces.items():
+                self.logger.info(f"Cleaning up hardware interface: {interface_name}")
+                try:
+                    await interface.cleanup()
+                except Exception as e:
+                    self.logger.warning(f"Error cleaning up {interface_name}: {e}")
+            self.hardware_interfaces = None
+        self.logger.info("Server shutdown complete")
 
 
 class EDPMClient:

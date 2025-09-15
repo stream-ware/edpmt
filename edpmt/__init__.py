@@ -40,18 +40,17 @@ try:
         I2CInterface,
         SPIInterface,
         UARTInterface,
-        GPIOSimulator,
-        I2CSimulator,
-        SPISimulator,
-        UARTSimulator,
         USBInterface,
         I2SInterface,
-        HardwareInterfaceFactory
+        HardwareInterfaceFactory,
+        SimulatedGPIO
     )
 except ImportError as e:
     print(f"Warning: Hardware interfaces not available - {e}")
     # Provide dummy placeholders or None to prevent crashes
-    GPIOInterface = I2CInterface = SPIInterface = UARTInterface = GPIOSimulator = I2CSimulator = SPISimulator = UARTSimulator = USBInterface = I2SInterface = HardwareInterfaceFactory = None
+    GPIOInterface = I2CInterface = SPIInterface = UARTInterface = USBInterface = I2SInterface = None
+    HardwareInterfaceFactory = None
+    SimulatedGPIO = None
 
 from .utils import (
     ensure_dependencies,
@@ -75,12 +74,7 @@ __all__ = [
     "USBInterface",
     "I2SInterface",
     "HardwareInterfaceFactory",
-    
-    # Simulators for development
-    "GPIOSimulator",
-    "I2CSimulator",
-    "SPISimulator", 
-    "UARTSimulator",
+    "SimulatedGPIO",
     
     # Utilities
     "ensure_dependencies",
