@@ -298,10 +298,13 @@ async def server_main(args):
                     rng = (8888, 8988)
                 res = reg.reserve(preferred=preferred, port_range=rng, host=args.host, hold=False, owner='edpmt')
                 reserved_port = res.port
-                # Write EDPMT_PORT to .env by default (unless overridden)
-                write_key = getattr(args, 'write_env_key', None) or 'EDPMT_PORT'
+                # Write SERVICE_PORT to .env by default (generic). Keep legacy EDPMT_PORT for compatibility.
+                write_key = getattr(args, 'write_env_key', None) or 'SERVICE_PORT'
                 env_path = getattr(args, 'env_path', '.env') or '.env'
                 reg.write_env({write_key: str(res.port)}, path=env_path)
+                if write_key == 'SERVICE_PORT':
+                    # Also write legacy alias
+                    reg.write_env({'EDPMT_PORT': str(res.port)}, path=env_path)
             else:
                 raise ImportError('PortKeeper not installed')
         except Exception as e:
