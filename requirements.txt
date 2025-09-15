@@ -4,6 +4,10 @@ aiohttp-cors>=0.7.0
 cryptography>=3.4.8
 websockets>=10.0
 
+# GPIO Frontend dependencies
+flask>=2.3.0
+flask-socketio>=5.3.0
+
 # Optional hardware dependencies (install with pip install edpmt[rpi])
 # RPi.GPIO>=0.7.1; sys_platform == "linux"
 # smbus2>=0.4.1; sys_platform == "linux" 
