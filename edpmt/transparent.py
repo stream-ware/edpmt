@@ -270,7 +270,7 @@ class EDPMTransparent:
     async def gpio_set(self, pin: int, value: int) -> bool:
         """Set GPIO pin value"""
         if not self._gpio:
-            self._gpio = self._init_gpio()
+            self._gpio = await self._init_gpio()
         
         try:
             await self._gpio.set(pin, value)
@@ -284,7 +284,7 @@ class EDPMTransparent:
     async def gpio_get(self, pin: int) -> int:
         """Get GPIO pin value"""
         if not self._gpio:
-            self._gpio = self._init_gpio()
+            self._gpio = await self._init_gpio()
         
         try:
             value = await self._gpio.get(pin)
@@ -298,7 +298,7 @@ class EDPMTransparent:
     async def gpio_pwm(self, pin: int, frequency: float, duty_cycle: float) -> bool:
         """Start PWM on GPIO pin"""
         if not self._gpio:
-            self._gpio = self._init_gpio()
+            self._gpio = await self._init_gpio()
         
         try:
             await self._gpio.pwm(pin, frequency, duty_cycle)
@@ -312,7 +312,7 @@ class EDPMTransparent:
     async def i2c_scan(self) -> list:
         """Scan I2C bus for devices"""
         if not self._i2c:
-            self._i2c = self._init_i2c()
+            self._i2c = await self._init_i2c()
         
         try:
             devices = await self._i2c.scan()
@@ -326,7 +326,7 @@ class EDPMTransparent:
     async def i2c_read(self, device: int, register: int, length: int = 1) -> bytes:
         """Read from I2C device"""
         if not self._i2c:
-            self._i2c = self._init_i2c()
+            self._i2c = await self._init_i2c()
         
         try:
             data = await self._i2c.read(device, register, length)
@@ -340,7 +340,7 @@ class EDPMTransparent:
     async def i2c_write(self, device: int, register: int, data: bytes) -> bool:
         """Write to I2C device"""
         if not self._i2c:
-            self._i2c = self._init_i2c()
+            self._i2c = await self._init_i2c()
         
         try:
             await self._i2c.write(device, register, data)
@@ -354,7 +354,7 @@ class EDPMTransparent:
     async def spi_transfer(self, data: bytes, bus: int = 0, device: int = 0) -> bytes:
         """Transfer data via SPI"""
         if not self._spi:
-            self._spi = self._init_spi()
+            self._spi = await self._init_spi()
         
         try:
             result = await self._spi.transfer(data, bus, device)
@@ -368,7 +368,7 @@ class EDPMTransparent:
     async def uart_write(self, data: bytes, port: str = '/dev/ttyUSB0') -> bool:
         """Write data to UART port"""
         if not self._uart:
-            self._uart = self._init_uart()
+            self._uart = await self._init_uart()
         
         try:
             await self._uart.write(port, data)
@@ -382,7 +382,7 @@ class EDPMTransparent:
     async def uart_read(self, port: str = '/dev/ttyUSB0', length: int = 1) -> bytes:
         """Read data from UART port"""
         if not self._uart:
-            self._uart = self._init_uart()
+            self._uart = await self._init_uart()
         
         try:
             data = await self._uart.read(port, length)
@@ -400,41 +400,97 @@ class EDPMTransparent:
         await asyncio.sleep(duration)
         return True
     
-    def _init_gpio(self):
-        """Initialize GPIO interface"""
+    async def _init_gpio(self):
+        """Initialize GPIO interface with proper async initialization"""
         from .hardware import GPIOInterface, GPIOSimulator
+        
+        # Try real hardware first
         try:
-            return GPIOInterface()
-        except ImportError:
-            logger.warning("GPIO hardware not available, using simulator")
-            return GPIOSimulator()
+            interface = GPIOInterface()
+            await interface.initialize()
+            logger.info("Real GPIO interface initialized")
+            return interface
+        except (ImportError, Exception) as e:
+            logger.warning(f"GPIO hardware not available ({e}), using simulator")
+            
+        # Fall back to simulator
+        try:
+            simulator = GPIOSimulator()
+            await simulator.initialize()
+            logger.info("GPIO simulator initialized")
+            return simulator
+        except Exception as e:
+            logger.error(f"Failed to initialize GPIO simulator: {e}")
+            raise
     
-    def _init_i2c(self):
-        """Initialize I2C interface"""
+    async def _init_i2c(self):
+        """Initialize I2C interface with proper async initialization"""
         from .hardware import I2CInterface, I2CSimulator
+        
+        # Try real hardware first
         try:
-            return I2CInterface()
-        except ImportError:
-            logger.warning("I2C hardware not available, using simulator")
-            return I2CSimulator()
+            interface = I2CInterface()
+            await interface.initialize()
+            logger.info("Real I2C interface initialized")
+            return interface
+        except (ImportError, Exception) as e:
+            logger.warning(f"I2C hardware not available ({e}), using simulator")
+            
+        # Fall back to simulator
+        try:
+            simulator = I2CSimulator()
+            await simulator.initialize()
+            logger.info("I2C simulator initialized")
+            return simulator
+        except Exception as e:
+            logger.error(f"Failed to initialize I2C simulator: {e}")
+            raise
     
-    def _init_spi(self):
-        """Initialize SPI interface"""
+    async def _init_spi(self):
+        """Initialize SPI interface with proper async initialization"""
         from .hardware import SPIInterface, SPISimulator
+        
+        # Try real hardware first
         try:
-            return SPIInterface()
-        except ImportError:
-            logger.warning("SPI hardware not available, using simulator")
-            return SPISimulator()
+            interface = SPIInterface()
+            await interface.initialize()
+            logger.info("Real SPI interface initialized")
+            return interface
+        except (ImportError, Exception) as e:
+            logger.warning(f"SPI hardware not available ({e}), using simulator")
+            
+        # Fall back to simulator
+        try:
+            simulator = SPISimulator()
+            await simulator.initialize()
+            logger.info("SPI simulator initialized")
+            return simulator
+        except Exception as e:
+            logger.error(f"Failed to initialize SPI simulator: {e}")
+            raise
     
-    def _init_uart(self):
-        """Initialize UART interface"""
+    async def _init_uart(self):
+        """Initialize UART interface with proper async initialization"""
         from .hardware import UARTInterface, UARTSimulator
+        
+        # Try real hardware first
         try:
-            return UARTInterface()
-        except ImportError:
-            logger.warning("UART hardware not available, using simulator")
-            return UARTSimulator()
+            interface = UARTInterface()
+            await interface.initialize()
+            logger.info("Real UART interface initialized")
+            return interface
+        except (ImportError, Exception) as e:
+            logger.warning(f"UART hardware not available ({e}), using simulator")
+            
+        # Fall back to simulator
+        try:
+            simulator = UARTSimulator()
+            await simulator.initialize()
+            logger.info("UART simulator initialized")
+            return simulator
+        except Exception as e:
+            logger.error(f"Failed to initialize UART simulator: {e}")
+            raise
     
     # === Server Mode ===
     
