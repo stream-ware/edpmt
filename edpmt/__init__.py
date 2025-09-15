@@ -21,7 +21,7 @@ Key Features:
 - Cross-platform support (Linux, Windows, macOS)
 """
 
-__version__ = "1.0.1"
+__version__ = "1.0.4"
 __author__ = "Tom Sapletta"
 __license__ = "Apache 2.0"
 __copyright__ = "Copyright 2025 Tom Sapletta"

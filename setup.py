@@ -26,7 +26,7 @@ if requirements_file.exists():
 
 setup(
     name="edpmt",
-    version="1.0.3",
+    version="1.0.5",
     author="Tom Sapletta",
     author_email="info@softreck.dev",
     description="EDPM Transparent - Simple, Secure, Universal Hardware Communication",
@@ -79,8 +79,8 @@ setup(
     entry_points={
         "console_scripts": [
             "edpmt=edpmt.cli:main",
-            "edpmt-server=edpmt.cli:server_main",
-            "edpmt-client=edpmt.cli:client_main",
+            "edpmt-server=edpmt.cli:server_main_entry",
+            "edpmt-client=edpmt.cli:client_main_entry",
         ],
     },
     include_package_data=True,
