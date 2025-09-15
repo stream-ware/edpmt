@@ -285,7 +285,7 @@ await client.execute('config', 'uart', port='/dev/ttyUSB0',
 ```
 
 ## 📚 Complete Examples
-
+![img.png](img.png)
 See the [`examples/`](examples/) directory for complete project implementations:
 
 - **[LED Controller](examples/rpi3-gpio/led-controller/)**: Multi-pattern RGB LED controller

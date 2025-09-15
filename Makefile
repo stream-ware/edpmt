@@ -74,10 +74,17 @@ dev-setup:
 # Create and setup virtual environment
 venv-setup:
 	@echo "🐍 Creating virtual environment..."
-	@python3 -m venv venv
+	@python3 -m venv venv --without-pip 2>/dev/null || python3 -m venv venv
 	@echo "📦 Installing EDPMT in virtual environment..."
-	@venv/bin/pip install --upgrade pip setuptools
-	@venv/bin/pip install -e .
+	@venv/bin/python -m ensurepip --upgrade 2>/dev/null || echo "pip already available"
+	@venv/bin/pip install --upgrade pip setuptools || echo "⚠️  Pip upgrade failed, continuing..."
+	@venv/bin/pip install -e . || { \
+		echo "⚠️  Standard pip install failed, trying alternatives..."; \
+		venv/bin/pip install -e . --user 2>/dev/null || \
+		echo "❌ Virtual environment installation failed"; \
+		echo "💡 Try manually: source venv/bin/activate && pip install -e ."; \
+		exit 1; \
+	}
 	@echo "✅ Virtual environment setup complete!"
 	@echo "💡 To activate: source venv/bin/activate"
 	@echo "💡 Then run: edpmt server --dev"
@@ -265,6 +272,8 @@ help:
 	@echo "  make setup-dev      - Setup development environment"
 	@echo "  make install        - Install EDPMT in dev mode"
 	@echo "  make install-all    - Install with all dependencies"
+	@echo "  make dev-setup      - PYTHONPATH-based setup (no installation)"
+	@echo "  make venv-setup     - Create and setup virtual environment"
 	@echo ""
 	@echo "Docker Operations:"
 	@echo "  make build          - Build Docker containers"
