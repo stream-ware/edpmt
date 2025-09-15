@@ -60,6 +60,7 @@ class EDPMTEndToEndTests:
         
         try:
             # Start server with development configuration
+            self.logger.info("🔧 Creating EDPMTransparent instance with config: dev_mode=True, port=8891, host=localhost, tls=False, hardware_simulators=True")
             self.server = EDPMTransparent(
                 name="EDPMT-E2E-Test",
                 config={
@@ -71,8 +72,10 @@ class EDPMTEndToEndTests:
                 }
             )
             
+            self.logger.info("🚀 Starting server in background task...")
             # Start server in background task
             self.server_task = asyncio.create_task(self.server.start_server())
+            self.logger.info("⏳ Server task created, waiting for server to be ready...")
             
             # Wait for server to be ready
             await self.wait_for_server()
@@ -81,7 +84,7 @@ class EDPMTEndToEndTests:
             return True
             
         except Exception as e:
-            self.logger.error(f"❌ Failed to start test server: {e}")
+            self.logger.error(f"❌ Failed to start test server: {e}", exc_info=True)
             return False
     
     async def wait_for_server(self, timeout=120):
