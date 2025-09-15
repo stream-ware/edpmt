@@ -4,7 +4,7 @@
  */
 
 class EDPMTClient {
-    constructor(wsUrl = 'ws://localhost:8085', httpUrl = 'http://localhost:8085') {
+    constructor(wsUrl = 'ws://localhost:8085/ws', httpUrl = 'http://localhost:8085') {
         this.wsUrl = wsUrl;
         this.httpUrl = httpUrl;
         this.ws = null;
@@ -15,6 +15,28 @@ class EDPMTClient {
         this.statusCallbacks = [];
         this.commandCallbacks = new Map();
         this.messageId = 0;
+        
+        // Load runtime configuration if provided by the server or start scripts
+        try {
+            const rc = (typeof window !== 'undefined') ? (window.RUNTIME_CONFIG || window.runtimeConfig) : null;
+            if (rc) {
+                if (rc.wsUrl) this.wsUrl = rc.wsUrl;
+                if (rc.httpUrl) this.httpUrl = rc.httpUrl;
+            }
+        } catch (e) {
+            // Ignore runtime config errors
+        }
+        
+        // Ensure WS URL contains '/ws' path for unified server
+        try {
+            const u = new URL(this.wsUrl);
+            if (!u.pathname || u.pathname === '/') {
+                u.pathname = '/ws';
+                this.wsUrl = u.toString();
+            }
+        } catch (e) {
+            // If URL parsing fails, leave as-is
+        }
         
         this.init();
     }
@@ -210,28 +232,63 @@ class EDPMTClient {
 
     // Visual Programming Operations
     async executeProject(projectData) {
-        return this.execute('execute-project', { project: projectData });
+        // Try HTTP first via generic execute endpoint
+        try {
+            return await this.httpExecute('execute-project', { project: projectData });
+        } catch (httpErr) {
+            return await this.execute('execute-project', { project: projectData });
+        }
     }
 
     async stopExecution() {
-        return this.execute('stop-execution');
+        try {
+            return await this.httpExecute('stop-execution');
+        } catch (httpErr) {
+            return await this.execute('stop-execution');
+        }
     }
 
     async saveProject(name, projectData) {
-        return this.execute('save-project', { name, project: projectData });
+        // Try HTTP first
+        try {
+            return await this.httpRequest('POST', '/api/save-project', { name, project: projectData });
+        } catch (httpErr) {
+            return await this.execute('save-project', { name, project: projectData });
+        }
     }
 
     async loadProject(name) {
-        return this.execute('load-project', { name });
+        // Try HTTP first
+        try {
+            return await this.httpRequest('POST', '/api/load-project', { name });
+        } catch (httpErr) {
+            return await this.execute('load-project', { name });
+        }
     }
 
     async listProjects() {
-        return this.execute('list-projects');
+        // Prefer HTTP API when available (implemented in server.py)
+        try {
+            const data = await this.httpRequest('GET', '/api/projects');
+            return data.projects || [];
+        } catch (httpErr) {
+            // Fallback to WebSocket command if HTTP fails
+            try {
+                return await this.execute('list-projects');
+            } catch (wsErr) {
+                throw httpErr;
+            }
+        }
     }
 
     // System Operations
     async getStatus() {
-        return this.execute('get-status');
+        // Prefer HTTP for status (lighter and directly supported)
+        try {
+            return await this.httpGetStatus();
+        } catch (httpErr) {
+            return await this.execute('get-status');
+        }
     }
 
     async getSystemInfo() {

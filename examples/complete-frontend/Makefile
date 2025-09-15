@@ -34,6 +34,7 @@ PORT_MANAGER := port_manager.py
 SERVER_SCRIPT := server.py
 LOG_DIR := logs
 PROJECTS_DIR := projects
+STATIC_DIR := static
 
 # Load environment variables from .env (for display purposes)
 -include .env
@@ -46,43 +47,24 @@ WEBSOCKET_PORT ?= 8086
 # Check if dependencies are installed
 check-deps:
 	@echo "🔍 Checking dependencies..."
-	@$(PYTHON) -c "import asyncio, websockets, json, pathlib" 2>/dev/null || \
+	@[ -f requirements.txt ] || (echo "❌ requirements.txt not found. Cannot check dependencies." && exit 1)
+	@$(PYTHON) -c "import pkg_resources; [pkg_resources.require(r) for r in open('requirements.txt', 'r').read().splitlines() if r and not r.startswith('#')]" 2>/dev/null || \
 		(echo "❌ Missing Python dependencies. Run 'make install' first." && exit 1)
 	@$(PYTHON) -c "import sys; sys.path.insert(0, '../..'); import edpmt" 2>/dev/null || \
 		(echo "❌ EDPMT not found. Please install EDPMT first." && exit 1)
 	@echo "✅ All dependencies are available"
 
-# Install dependencies (including portkeeper and python-dotenv)
+# Install dependencies using requirements.txt
 install:
-	@echo "📦 Installing dependencies..."
-	@echo "Checking current environment..."
-	@$(PYTHON) -c "import sys; print('Python:', sys.version)" 
-	@$(PYTHON) -c "import asyncio, websockets, json, pathlib; print('✅ Core dependencies available')" || \
-		(echo "Installing missing dependencies..." && $(PIP) install --user --break-system-packages websockets asyncio-mqtt)
-	@$(PYTHON) -c "import portkeeper, dotenv; print('✅ Port management dependencies available')" || \
-		(echo "Installing port management dependencies..." && $(PIP) install --user --break-system-packages portkeeper python-dotenv)
+	@echo "📦 Installing dependencies from requirements.txt..."
+	@$(PIP) install --user --break-system-packages -r requirements.txt
 	@echo "🏗️  Checking EDPMT..."
 	@$(PYTHON) -c "import sys; sys.path.insert(0, '../..'); import edpmt; print('✅ EDPMT available')" || \
-		(echo "Installing EDPMT..." && cd ../.. && $(PIP) install --user -e .)
+		(echo "Installing EDPMT in editable mode..." && cd ../.. && $(PIP) install --user -e .)
 	@echo "✅ Installation check completed successfully"
 
-# Install using conda (for conda environments)
-install-conda:
-	@echo "📦 Installing dependencies with conda..."
-	@conda install -c conda-forge websockets || echo "websockets already available"
-	@echo "🏗️  Setting up EDPMT..."
-	@cd ../.. && $(PIP) install -e . || echo "EDPMT already available"
-	@echo "✅ Conda installation completed"
-
-# Skip installation check (when dependencies are already available)
-skip-install:
-	@echo "⏩ Skipping installation - using existing dependencies"
-	@$(PYTHON) -c "import asyncio, websockets, json, pathlib; print('✅ Core dependencies confirmed')"
-	@$(PYTHON) -c "import sys; sys.path.insert(0, '../..'); import edpmt; print('✅ EDPMT confirmed')"
-	@echo "✅ All dependencies confirmed - ready to run!"
-
 # Setup directories and example projects
-setup: check-deps
+setup:
 	@echo "🏗️  Setting up directories and example projects..."
 	@mkdir -p $(LOG_DIR)
 	@mkdir -p $(PROJECTS_DIR)
@@ -96,50 +78,19 @@ setup: check-deps
 		[open(f'$(PROJECTS_DIR)/{p[\"name\"].replace(\" \", \"_\").lower()}.json', 'w').write(json.dumps(p, indent=2)) for p in projects]"
 	@echo "✅ Setup completed - example projects created"
 
-# Run in production mode (with real hardware)
-run: check-deps setup
-	@echo "🚀 Starting EDPMT Complete Frontend (Production Mode)..."
-	@echo "📄 Frontend will be available at: http://localhost:$(FRONTEND_PORT)"
-	@echo "🔌 WebSocket server will run on: ws://localhost:$(WEBSOCKET_PORT)"
-	@echo "⚠️  Using REAL hardware - be careful!"
-	@echo ""
-	@$(PYTHON) $(SERVER_SCRIPT) \
-		--http-port $(FRONTEND_PORT) \
-		--ws-port $(WEBSOCKET_PORT) \
-		--verbose 2>&1 | tee $(LOG_DIR)/server.log
-
-# Allocate ports using portkeeper
-allocate-ports:
-	@echo "🔍 Allocating ports with portkeeper..."
-	@$(PYTHON) $(PORT_MANAGER) allocate
-	@echo "✅ Ports allocated and saved to .env"
-
-# Release allocated ports
-release-ports:
-	@echo "🔄 Releasing allocated ports..."
-	@$(PYTHON) $(PORT_MANAGER) release
-	@echo "✅ All ports released"
-
-# Show current port allocations
-port-status:
-	@echo "📊 Current port allocations:"
-	@$(PYTHON) $(PORT_MANAGER) status
-
-# Run in development mode (with hardware simulators and dynamic ports) allocate-ports
-dev: check-deps setup
+# Run in development mode (unified server serves static + WebSocket under /ws)
+dev: stop check-deps setup
 	@echo "🚀 Starting EDPMT Complete Frontend (Development Mode)..."
 	@echo "🔧 Using hardware simulators - safe for development"
-	@echo "🎯 Using dynamic port allocation (portkeeper)"
 	@echo ""
-	@echo "Quick tips:"
-	@echo "  - Use Ctrl+C to stop the server"
-	@echo "  - All GPIO operations are simulated"
-	@echo "  - Ports are dynamically allocated to avoid conflicts"
-	@echo "  - Check the browser console for debug info"
-	@echo "  - Logs are saved to $(LOG_DIR)/server.log"
+	@$(PYTHON) $(SERVER_SCRIPT) --http-port $(HTTP_PORT) --verbose > $(LOG_DIR)/server-dev.log 2>&1 &
 	@echo ""
-	@# The server will now read the allocated ports directly from the .env file
-	@$(PYTHON) $(SERVER_SCRIPT) 2>&1 | tee $(LOG_DIR)/server-dev.log
+	@echo "✅ Server is running in the background."
+	@echo "   - Frontend available at: http://localhost:$(HTTP_PORT)"
+	@echo "   - WebSocket endpoint:   ws://localhost:$(HTTP_PORT)/ws"
+	@echo "   - Use 'make stop' to shut down the server."
+	@echo "   - Logs are in the '$(LOG_DIR)' directory."
+	@echo ""
 
 # Run without port allocation (use existing ports from .env)
 dev-quick: check-deps setup
@@ -150,37 +101,15 @@ dev-quick: check-deps setup
 	@echo ""
 	@$(PYTHON) $(SERVER_SCRIPT) 2>&1 | tee $(LOG_DIR)/server-dev-quick.log
 
-# Test the complete solution
-test: check-deps
-	@echo "🧪 Testing EDPMT Complete Frontend..."
-	@echo "1. Testing Python imports..."
-	@$(PYTHON) -c "import sys; sys.path.insert(0, '../../..'); import edpmt; print('✅ EDPMT import successful')"
-	@$(PYTHON) -c "import websockets, asyncio, json; print('✅ Python dependencies available')"
-	@echo "2. Testing server startup (dry run)..."
-	@$(PYTHON) -c "from $(basename $(SERVER_SCRIPT) .py) import EDPMTFrontendServer; print('✅ Server module loads correctly')"
-	@echo "3. Checking static files..."
-	@test -f index.html && echo "✅ Frontend HTML found" || (echo "❌ Frontend HTML missing" && exit 1)
-	@test -f styles.css && echo "✅ Frontend CSS found" || (echo "❌ Frontend CSS missing" && exit 1)
-	@test -d js && echo "✅ JavaScript directory found" || (echo "❌ JavaScript directory missing" && exit 1)
-	@test -f js/main.js && echo "✅ Main JavaScript found" || (echo "❌ Main JavaScript missing" && exit 1)
-	@test -f js/edpmt-client.js && echo "✅ EDPMT client found" || (echo "❌ EDPMT client missing" && exit 1)
-	@echo "4. Testing JSON project files..."
-	@test -d $(PROJECTS_DIR) || mkdir -p $(PROJECTS_DIR)
-	@ls $(PROJECTS_DIR)/*.json >/dev/null 2>&1 && echo "✅ Example projects found" || echo "⚠️  No example projects (run 'make setup')"
-	@echo ""
-	@echo "✅ All tests passed! The solution is ready to run."
-	@echo "💡 Run 'make dev' to start in development mode"
-
-# Stop running servers (find and kill processes)
+# Stop development server
 stop:
-	@echo "🛑 Stopping EDPMT Complete Frontend servers..."
-	@pkill -f "$(SERVER_SCRIPT)" 2>/dev/null && echo "✅ Stopped server processes" || echo "ℹ️  No server processes found"
-	@pkill -f "edpmt.*server" 2>/dev/null && echo "✅ Stopped EDPMT processes" || echo "ℹ️  No EDPMT processes found"
-	@echo "✅ Stop operation completed"
+	@echo "🛑 Stopping development server..."
+	@pkill -f "^$(PYTHON) $(SERVER_SCRIPT)" || echo "Server was not running."
+	@echo "✅ Server stopped."
 
-# Clean temporary files and logs
+# Clean temporary files
 clean:
-	@echo "🧹 Cleaning temporary files..."
+	@echo "🧹 Cleaning up..."
 	@rm -rf $(LOG_DIR)/*.log 2>/dev/null && echo "✅ Cleared log files" || echo "ℹ️  No log files to clean"
 	@rm -rf __pycache__ 2>/dev/null && echo "✅ Cleared Python cache" || echo "ℹ️  No Python cache to clean"
 	@rm -rf .pytest_cache 2>/dev/null && echo "✅ Cleared test cache" || echo "ℹ️  No test cache to clean"

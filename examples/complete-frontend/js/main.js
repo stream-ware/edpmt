@@ -14,11 +14,12 @@ class EDPMTApp {
         this.currentProject = null;
         this.executionState = 'stopped';
         this.config = {
-            backendUrl: 'ws://localhost:8086',
+            // Defaults will be loaded from runtime-config.js and localStorage
+            backendUrl: 'ws://localhost:8085/ws', // Sensible default
             httpUrl: 'http://localhost:8085',
             updateInterval: 1000,
             enableLogging: true,
-            hardwareMode: 'real'
+            hardwareMode: 'simulator'
         };
         
         this.init();
@@ -49,20 +50,41 @@ class EDPMTApp {
     }
 
     loadConfig() {
+        // 1. Start with runtime config as the base
+        if (typeof window !== 'undefined' && window.runtimeConfig) {
+            if (window.runtimeConfig.wsUrl) {
+                this.config.backendUrl = window.runtimeConfig.wsUrl;
+                // Assume httpUrl is the same host/port
+                const url = new URL(window.runtimeConfig.wsUrl.replace('ws', 'http'));
+                this.config.httpUrl = `${url.protocol}//${url.host}`;
+            }
+        }
+
+        // 2. Load user-saved settings from localStorage, which can override runtime config
         const savedConfig = localStorage.getItem('edpmt-config');
         if (savedConfig) {
             this.config = { ...this.config, ...JSON.parse(savedConfig) };
         }
         
-        // Update UI with config
+        // 3. Update the UI with the final, effective config
         document.getElementById('backend-url').value = this.config.backendUrl;
         document.getElementById('update-interval').value = this.config.updateInterval;
-        document.getElementById('hardware-mode').value = this.config.hardwareMode;
+        document.getElementById('hardware-mode-select').value = this.config.hardwareMode;
         document.getElementById('enable-logging').checked = this.config.enableLogging;
     }
 
     saveConfig() {
+        // Read values from the form and save them
+        this.config.backendUrl = document.getElementById('backend-url').value;
+        this.config.updateInterval = parseInt(document.getElementById('update-interval').value, 10);
+        this.config.hardwareMode = document.getElementById('hardware-mode-select').value;
+        this.config.enableLogging = document.getElementById('enable-logging').checked;
+
         localStorage.setItem('edpmt-config', JSON.stringify(this.config));
+        this.addLogEntry('success', 'Settings saved. Reloading to apply changes...');
+        
+        // Reload to apply changes, especially the backend URL
+        setTimeout(() => window.location.reload(), 1000);
     }
 
     initializeUI() {
@@ -256,6 +278,17 @@ class EDPMTApp {
         document.getElementById('project-name').addEventListener('input', (e) => {
             this.updateProjectStatus('Modified');
         });
+    }
+
+    loadProjectDialog() {
+        // Show the Projects tab and refresh list
+        try {
+            this.switchPaletteTab('projects');
+            this.loadProjects();
+            this.addLogEntry('info', 'Select a project from the list on the left');
+        } catch (e) {
+            console.error('Failed to open project list:', e);
+        }
     }
 
     async connectToBackend() {
@@ -573,7 +606,7 @@ class EDPMTApp {
     }
 
     updateHardwareStatus(mode) {
-        document.getElementById('hardware-mode').textContent = mode;
+        document.getElementById('hardware-mode-display').textContent = mode;
     }
 
     updateProjectStatus(status) {
@@ -744,14 +777,17 @@ class EDPMTApp {
 
     // Settings Management
     saveSettings() {
+        // Read values from the form and save them
         this.config.backendUrl = document.getElementById('backend-url').value;
-        this.config.updateInterval = parseInt(document.getElementById('update-interval').value);
-        this.config.hardwareMode = document.getElementById('hardware-mode').value;
+        this.config.updateInterval = parseInt(document.getElementById('update-interval').value, 10);
+        this.config.hardwareMode = document.getElementById('hardware-mode-select').value;
         this.config.enableLogging = document.getElementById('enable-logging').checked;
+
+        localStorage.setItem('edpmt-config', JSON.stringify(this.config));
+        this.addLogEntry('success', 'Settings saved. Reloading to apply changes...');
         
-        this.saveConfig();
-        this.closeModal('settings-modal');
-        this.addLogEntry('success', 'Settings saved');
+        // Reload to apply changes, especially the backend URL
+        setTimeout(() => window.location.reload(), 1000);
     }
 
     async emergencyStop() {
