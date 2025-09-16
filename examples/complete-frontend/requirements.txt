@@ -1,8 +1,0 @@
-# Core application dependencies
-websockets
-python-dotenv
-portkeeper
-
-# HTTP and WebSocket server framework
-aiohttp
-aiohttp-cors
