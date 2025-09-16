@@ -37,59 +37,50 @@ class Config:
     PROJECTS_DIR = STATIC_DIR / 'projects'
 
 class FrontendServer:
-    """Frontend server for serving static files and handling project management."""
+    """Frontend server for the EDPMT web interface."""
 
     def __init__(self, host='0.0.0.0', port=8085, ws_port=8086, debug=False, log_level='INFO', log_file=None):
-        """Initialize the frontend server.
-        
-        Args:
-            host (str): Host to bind to
-            port (int): Port to listen on
-            ws_port (int): WebSocket server port
-            debug (bool): Enable debug mode
-            log_level (str): Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-            log_file (str, optional): Path to log file
-        """
+        """Initialize the frontend server."""
         self.host = host
         self.port = port
         self.ws_port = ws_port
+        self.ws_url = f'ws://{host}:{ws_port}'
         self.debug = debug
         
-        # Configure logging
-        self.setup_logging(log_level, log_file)
+        # Initialize logging
+        self.logger = self.setup_logging(log_level, log_file)
+        self.logger.info("Initializing frontend server...")
         
+        # Create application
         self.app = web.Application()
         self.setup_middleware()
         self.setup_routes()
         
-        # WebSocket client for backend communication
-        self.ws_url = f"ws://localhost:{ws_port}/ws"
-        self.ws = None
+        self.logger.info(f"Frontend server initialized on http://{self.host}:{self.port}")
+    
+    def setup_logging(self, log_level='INFO', log_file=None):
+        """Set up logging configuration."""
+        logger = logging.getLogger('frontend')
+        logger.setLevel(getattr(logging, log_level.upper()))
         
-        logger.info(f"Frontend server initialized (WebSocket: {self.ws_url})")
-
-    def setup_logging(self, level='INFO', log_file=None):
-        """Configure logging."""
-        log_level = getattr(logging, level.upper(), logging.INFO)
-        log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-        
-        handlers = [logging.StreamHandler()]
-        if log_file:
-            handlers.append(logging.FileHandler(log_file))
-        
-        logging.basicConfig(
-            level=log_level,
-            format=log_format,
-            handlers=handlers
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
         )
         
-        # Set log level for aiohttp and other libraries
-        logging.getLogger('aiohttp').setLevel(log_level)
-        logging.getLogger('asyncio').setLevel(log_level)
+        # Console handler
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(formatter)
+        logger.addHandler(console_handler)
         
-        if self.debug:
-            logging.getLogger().setLevel(logging.DEBUG)
-            logging.debug("Debug mode enabled")
+        # File handler if log file is specified
+        if log_file:
+            os.makedirs(os.path.dirname(log_file), exist_ok=True)
+            file_handler = logging.FileHandler(log_file)
+            file_handler.setFormatter(formatter)
+            logger.addHandler(file_handler)
+        
+        return logger
 
     async def list_projects_handler(self, request):
         """Lists available projects from the projects directory."""
@@ -146,65 +137,47 @@ class FrontendServer:
             return web.json_response({'error': str(e)}, status=500)
 
     def setup_middleware(self):
-        """Set up middleware for the frontend server."""
-        # Error handling middleware
-        @web.middleware
-        async def error_middleware(request, handler):
-            try:
-                response = await handler(request)
-                if response.status == 404:
-                    return await self.index_handler(request)
-                return response
-            except web.HTTPException as ex:
-                if ex.status == 404:
-                    return await self.index_handler(request)
-                raise
-            except Exception as e:
-                self.logger.error(f"Error handling request {request.rel_url}: {str(e)}")
-                return web.json_response(
-                    {"error": "Internal server error", "details": str(e)},
-                    status=500
-                )
-
-        self.app.middlewares.append(error_middleware)
-
-        # CORS middleware setup
+        """Set up CORS middleware."""
+        # Configure default CORS settings
         cors = aiohttp_cors.setup(self.app, defaults={
             "*": aiohttp_cors.ResourceOptions(
                 allow_credentials=True,
                 expose_headers="*",
                 allow_headers="*",
-                allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-                allow_origin=[
-                    f"http://{self.host}:{self.port}",
-                    f"http://127.0.0.1:{self.port}",
-                    f"http://localhost:{self.port}",
-                    "http://localhost:8085",
-                    "http://127.0.0.1:8085"
-                ]
+                allow_methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"]
             )
         })
 
-        # Add CORS to all routes
+        # Configure CORS for all routes
         for route in list(self.app.router.routes()):
-            try:
-                cors.add(route)
-            except RuntimeError as e:
-                if "Cannot add a route with the same path and method" in str(e):
-                    self.logger.warning(f"Skipping duplicate route: {route}")
-                else:
-                    self.logger.error(f"Error adding CORS to route {route}: {e}")
-                    raise
+            cors.add(route)
 
     def setup_routes(self):
         """Set up all routes for the frontend server."""
         # Add API routes
         self.app.router.add_route('GET', '/api/status', self.status_handler)
         
+        # Add runtime config route
+        self.app.router.add_route('GET', '/runtime-config.js', self.runtime_config_handler)
+        
         # Add static files
         static_path = Path(__file__).parent.parent / 'static'
         if static_path.exists():
-            self.app.router.add_static('/static/', path=str(static_path))
+            self.app.router.add_static(
+                '/static/',
+                path=str(static_path),
+                show_index=True
+            )
+            
+            # Explicitly add routes for JS and CSS files
+            js_path = static_path / 'js'
+            if js_path.exists():
+                self.app.router.add_static(
+                    '/js/',
+                    path=str(js_path),
+                    show_index=False,
+                    append_version=True
+                )
         
         # Serve index.html for all other routes (SPA support)
         self.app.router.add_route('GET', '/{path:.*}', self.index_handler)
@@ -225,11 +198,7 @@ class FrontendServer:
             headers={
                 'Cache-Control': 'no-cache, no-store, must-revalidate',
                 'Pragma': 'no-cache',
-                'Expires': '0',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'GET, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-                'Access-Control-Allow-Credentials': 'true'
+                'Expires': '0'
             }
         )
     
@@ -277,7 +246,7 @@ class FrontendServer:
         await runner.setup()
         site = web.TCPSite(runner, self.host, self.port)
         
-        logger.info(f"🚀 Frontend server starting on http://{self.host}:{self.port}")
+        self.logger.info(f"🚀 Frontend server starting on http://{self.host}:{self.port}")
         await site.start()
 
         try:
@@ -287,7 +256,7 @@ class FrontendServer:
             pass
         finally:
             await runner.cleanup()
-            logger.info("Frontend server shut down.")
+            self.logger.info("Frontend server shut down.")
 
 def parse_args():
     """Parse command line arguments."""
