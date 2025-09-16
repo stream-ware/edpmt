@@ -58,9 +58,7 @@ install: check-deps
 	@echo "\n🚀 Installing all dependencies..."
 	${MAKE} install-frontend
 	${MAKE} install-websocket
-	mkdir -p ${LOG_DIR} ${PROJECTS_DIR} ${STATIC_DIR}/js
-	cp -r ${JS_DIR}/*.js ${STATIC_DIR}/js/
-	cp runtime-config.js ${STATIC_DIR}/
+	mkdir -p ${LOG_DIR} ${PROJECTS_DIR}
 
 # Install frontend service dependencies
 install-frontend:

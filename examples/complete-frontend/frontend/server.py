@@ -160,28 +160,31 @@ class FrontendServer:
         # Add runtime config route
         self.app.router.add_route('GET', '/runtime-config.js', self.runtime_config_handler)
         
-        # Add static files
-        static_path = Path(__file__).parent.parent / 'static'
-        if static_path.exists():
+        # Base directory for static files
+        base_dir = Path(__file__).parent.parent
+        
+        # Serve JavaScript files from /js/
+        js_dir = base_dir / 'js'
+        if js_dir.exists():
             self.app.router.add_static(
-                '/static/',
-                path=str(static_path),
-                show_index=True
+                '/js/',
+                path=str(js_dir),
+                show_index=False
             )
-            
-            # Explicitly add routes for JS and CSS files
-            js_path = static_path / 'js'
-            if js_path.exists():
-                self.app.router.add_static(
-                    '/js/',
-                    path=str(js_path),
-                    show_index=False,
-                    append_version=True
+        
+        # Serve CSS files from root
+        css_file = base_dir / 'styles.css'
+        if css_file.exists():
+            async def serve_css(request):
+                return web.FileResponse(
+                    path=css_file,
+                    headers={'Content-Type': 'text/css'}
                 )
+            self.app.router.add_route('GET', '/styles.css', serve_css)
         
         # Serve index.html for all other routes (SPA support)
-        self.app.router.add_route('GET', '/{path:.*}', self.index_handler)
         self.app.router.add_route('GET', '/', self.index_handler)
+        self.app.router.add_route('GET', '/{path:.*}', self.index_handler)
 
     async def runtime_config_handler(self, request):
         """Serve the runtime configuration."""
