@@ -25,6 +25,7 @@ echo "🌐 HTTP port: $HTTP_PORT"
 HTTP_PORT="$HTTP_PORT" \
 "$PYTHON_BIN" "$APP_DIR/$SERVER_SCRIPT" > "$LOG_DIR/server-dev.log" 2>&1 &
 SERVER_PID=$!
+echo $SERVER_PID > "$APP_DIR/server.pid"
 
 # Small delay to let the server start
 sleep 2

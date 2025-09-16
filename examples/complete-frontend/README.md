@@ -374,3 +374,233 @@ This enables:
 - **Community**: Join discussions in GitHub Discussions
 
 Happy developing with EDPMT! 🚀
+
+# EDPMT Complete Frontend
+
+A complete frontend solution for the EDPMT (Embedded Device Programming and Management Tool) that provides a visual programming interface and peripheral control.
+
+## Project Structure
+
+```
+complete-frontend/
+├── config_service/      # Configuration service (optional)
+├── frontend/           # Frontend server (static files and API)
+│   ├── __init__.py
+│   ├── server.py       # Main frontend server
+│   └── requirements.txt
+├── websocket/          # WebSocket server (hardware communication)
+│   ├── __init__.py
+│   ├── server.py       # WebSocket server implementation
+│   └── requirements.txt
+├── js/                 # Frontend JavaScript files
+│   ├── edpmt-client.js # WebSocket client
+│   ├── main.js         # Main application logic
+│   ├── block-editor.js # Block editor implementation
+│   └── page-editor.js  # Page editor implementation
+├── logs/               # Log files directory
+├── projects/           # Project files directory
+├── scripts/            # Utility scripts
+├── .env                # Environment variables
+├── .gitignore
+├── Makefile            # Build and run commands
+├── index.html          # Main HTML file
+├── requirements.txt    # Global requirements
+└── server.py          # Legacy server (kept for reference)
+```
+
+## Prerequisites
+
+- Python 3.8+
+- Node.js 14+ (for frontend development)
+- pip (Python package manager)
+
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd edpmt/examples/complete-frontend
+   ```
+
+2. Create and activate a virtual environment (recommended):
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+
+3. Install dependencies for both services:
+   ```bash
+   make install
+   ```
+   
+   Or install them separately:
+   ```bash
+   # Install frontend dependencies
+   cd frontend
+   pip install -r requirements.txt
+   cd ..
+   
+   # Install WebSocket server dependencies
+   cd websocket
+   pip install -r requirements.txt
+   cd ..
+   ```
+
+4. Create a `.env` file (if not already created):
+   ```bash
+   cp .env.example .env
+   ```
+
+## Configuration
+
+Edit the `.env` file to configure the application:
+
+```env
+# Server Ports
+FRONTEND_PORT=8085
+WEBSOCKET_PORT=8086
+
+# Debug Settings
+DEBUG=true
+LOG_LEVEL=INFO
+
+# Hardware Settings
+USE_HARDWARE_SIMULATORS=true
+
+# Paths (relative to project root)
+LOG_DIR=logs
+PROJECTS_DIR=projects
+STATIC_DIR=.
+```
+
+## Running the Application
+
+### Development Mode
+
+To start both the frontend and WebSocket servers in development mode:
+
+```bash
+make dev
+```
+
+This will:
+1. Start the frontend server on port 8085
+2. Start the WebSocket server on port 8086
+3. Open the application in your default browser
+4. Tail the logs from both servers
+
+### Production Mode
+
+For production, you might want to run the servers separately using a process manager like `pm2` or `systemd`.
+
+Start the frontend server:
+```bash
+cd frontend
+python server.py
+```
+
+In a separate terminal, start the WebSocket server:
+```bash
+cd websocket
+python server.py
+```
+
+## Available Make Commands
+
+- `make install` - Install all dependencies
+- `make dev` - Start both servers in development mode
+- `make start-frontend` - Start only the frontend server
+- `make start-websocket` - Start only the WebSocket server
+- `make stop` - Stop all running servers
+- `make clean` - Clean up temporary files
+- `make test` - Run tests
+- `make lint` - Run linters
+- `make format` - Format code
+
+## API Endpoints
+
+### Frontend Server (Port 8085 by default)
+
+- `GET /` - Main application
+- `GET /api/projects` - List all projects
+- `POST /api/save-project` - Save a project
+- `POST /api/load-project` - Load a project
+
+### WebSocket Server (Port 8086 by default)
+
+- `ws://localhost:8086/ws` - WebSocket endpoint
+- `GET /api/status` - Server status
+- `POST /api/execute` - Execute a command
+
+## Project Structure Details
+
+### Frontend Server (`frontend/server.py`)
+
+- Serves static files (HTML, CSS, JS)
+- Handles project management (save/load)
+- Provides a REST API for the frontend
+
+### WebSocket Server (`websocket/server.py`)
+
+- Handles WebSocket connections
+- Manages hardware communication
+- Broadcasts system information
+- Processes commands from the frontend
+
+### JavaScript Client (`js/edpmt-client.js`)
+
+- Manages WebSocket connection
+- Provides a clean API for sending commands
+- Handles reconnection and error handling
+- Emits events for state changes
+
+## Development
+
+### Adding New Features
+
+1. Create a new branch for your feature:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. Make your changes and test them:
+   ```bash
+   make dev
+   ```
+
+3. Run tests and linters:
+   ```bash
+   make test
+   make lint
+   ```
+
+4. Commit your changes with a descriptive message:
+   ```bash
+   git add .
+   git commit -m "Add feature: your feature description"
+   ```
+
+5. Push your branch and create a pull request
+
+### Debugging
+
+- Check the logs in the terminal where you ran `make dev`
+- Browser developer tools (F12) for frontend debugging
+- Use `console.log()` or `debugger` statements in JavaScript
+- Check the browser's network tab for API requests
+
+## License
+
+[Your License Here]
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## Support
+
+For support, please open an issue in the repository or contact the maintainers.

@@ -1,4 +1,5 @@
 .idea
+.pid
 .vscode
 .pem
 .rdb

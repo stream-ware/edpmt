@@ -10,6 +10,10 @@ dodatkowo stworz plik .env do wszystkich globalnych zmiennych i uzywaj tam tez p
 0 w zakadce projects pwoinny by projekty z folderu projects/
 
 
+- zrob refaktoryzacje wszystkich plikow gdzie kod zajmuje ponad 500 linii w pliku
+- podobnie jak usluge zmiany konfiguracji w folderze config_service/, podziel server.py na dwa foldery frontend/ i websocket/ 
+- tam umiesc usluge frontend osobno oraz usluge websocket dla edpmt osobno z zaleznosciami i uruchom wszytsko z make dev
+
 
 ### ✅ **Dynamic Flow Generator Created:**
 
