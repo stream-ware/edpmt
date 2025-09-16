@@ -11,6 +11,7 @@ import os
 import sys
 from pathlib import Path
 import argparse
+import time
 
 from aiohttp import web
 import aiohttp_cors
@@ -197,22 +198,17 @@ class FrontendServer:
 
     def setup_routes(self):
         """Set up all routes for the frontend server."""
-        # Serve static files from /static/
-        static_path = str(Path(__file__).parent.parent / 'static')
-        self.app.router.add_static('/static/', path=static_path, name='static')
+        # Add API routes
+        self.app.router.add_route('GET', '/api/status', self.status_handler)
         
-        # Serve runtime config
-        self.app.router.add_get('/runtime-config.js', self.runtime_config_handler)
-        
-        # API routes
-        self.app.router.add_get('/api/status', self.status_handler)
-        self.app.router.add_get('/api/projects', self.list_projects_handler)
-        self.app.router.add_get('/api/projects/{project_id}', self.get_project_handler)
-        self.app.router.add_post('/api/projects', self.save_project_handler)
-        self.app.router.add_delete('/api/projects/{project_id}', self.delete_project_handler)
+        # Add static files
+        static_path = Path(__file__).parent.parent / 'static'
+        if static_path.exists():
+            self.app.router.add_static('/static/', path=str(static_path))
         
         # Serve index.html for all other routes (SPA support)
-        self.app.router.add_route('*', '/{path:.*}', self.index_handler)
+        self.app.router.add_route('GET', '/{path:.*}', self.index_handler)
+        self.app.router.add_route('GET', '/', self.index_handler)
 
     async def runtime_config_handler(self, request):
         """Serve the runtime configuration."""
@@ -245,7 +241,7 @@ class FrontendServer:
             
         with open(index_path, 'r') as f:
             content = f.read()
-        
+            
         # Update base URL in index.html if needed
         base_url = f"http://{self.host}:{self.port}"
         content = content.replace('href="/', f'href="{base_url}/')
@@ -264,6 +260,16 @@ class FrontendServer:
                 'Access-Control-Allow-Credentials': 'true'
             }
         )
+
+    async def status_handler(self, request):
+        """Handle status requests."""
+        return web.json_response({
+            'status': 'ok',
+            'service': 'frontend',
+            'port': self.port,
+            'websocket_port': self.ws_port,
+            'timestamp': time.time()
+        })
 
     async def run(self):
         """Run the frontend server."""

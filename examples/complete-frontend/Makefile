@@ -1,7 +1,7 @@
 # EDPMT Complete Frontend Makefile
 # Provides simple commands to run the complete visual programming and peripheral control solution
 
-.PHONY: help install install-frontend install-websocket run dev dev-debug stop clean test setup check-deps
+.PHONY: help install install-frontend install-websocket run dev dev-debug stop clean test setup check-deps logs
 
 # Default target
 help:
@@ -18,6 +18,7 @@ help:
 	@echo "  make stop              - Stop all services"
 	@echo "  make clean             - Clean temporary files and logs"
 	@echo "  make test              - Run tests"
+	@echo "  make logs              - Show logs"
 	@echo ""
 	@echo "Quick start:"
 	@echo "  1. make install"
@@ -32,6 +33,7 @@ LOG_DIR := logs
 PROJECTS_DIR := projects
 STATIC_DIR := static
 JS_DIR := js
+HOST := 0.0.0.0
 
 # Service PIDs
 FRONTEND_PID := .frontend.pid
@@ -75,130 +77,81 @@ dev: stop install
 	@echo "\n🚀 Starting development servers..."
 	@echo "Frontend: http://localhost:${FRONTEND_PORT}"
 	@echo "WebSocket: ws://localhost:${WEBSOCKET_PORT}/ws\n"
-	
-	# Create necessary directories
-	@mkdir -p ${LOG_DIR} ${PROJECTS_DIR}
-	
-	# Start WebSocket server
-	@echo "Starting WebSocket server on port ${WEBSOCKET_PORT}..."
+	@echo "Starting WebSocket server..."
 	@cd websocket && \
-	${PYTHON} server.py --port ${WEBSOCKET_PORT} --debug > ../${LOG_DIR}/websocket.log 2>&1 & \
-	echo $$! > ../${WEBSOCKET_PID} && \
-	echo "WebSocket server started (PID: $$!)"
-	
-	# Give WebSocket server a moment to start
-	@echo -n "Waiting for WebSocket server to initialize"
-	@for i in 1 2 3 4 5; do \
-		sleep 1; \
-		echo -n "."; \
-	done
-	@echo ""
-	
-	# Start frontend server
-	@echo "Starting frontend server on port ${FRONTEND_PORT}..."
+	  nohup python3 -u server.py \
+	    --host ${HOST} \
+	    --port ${WEBSOCKET_PORT} \
+	    --log-level ${LOG_LEVEL} \
+	    --log-file ${LOG_DIR}/websocket.log > /dev/null 2>&1 & echo $$! > ${WEBSOCKET_PID}
+	@echo "Starting frontend server..."
 	@cd frontend && \
-	${PYTHON} server.py --port ${FRONTEND_PORT} --ws-port ${WEBSOCKET_PORT} --debug > ../${LOG_DIR}/frontend.log 2>&1 & \
-	echo $$! > ../${FRONTEND_PID} && \
-	echo "Frontend server started (PID: $$!)"
-	
-	# Open browser after a short delay
-	@echo -n "\n🌐 Waiting for servers to be ready"
-	@for i in 1 2 3 4 5; do \
-		sleep 1; \
-		echo -n "."; \
-	done
-	@echo ""
-	
-	@echo "\n📋 Tailing logs (Ctrl+C to stop)..."
-	@tail -f ${LOG_DIR}/*.log
+	  nohup python3 -u server.py \
+	    --host ${HOST} \
+	    --port ${FRONTEND_PORT} \
+	    --ws-port ${WEBSOCKET_PORT} \
+	    --log-level ${LOG_LEVEL} \
+	    --log-file ${LOG_DIR}/frontend.log > /dev/null 2>&1 & echo $$! > ${FRONTEND_PID}
+	@echo "Servers started. Check logs with 'make logs'"
 
 # Run in development mode with debug output
 dev-debug: stop install
 	@echo "\n🚀 Starting development servers in DEBUG mode..."
 	@echo "Frontend: http://localhost:${FRONTEND_PORT}"
 	@echo "WebSocket: ws://localhost:${WEBSOCKET_PORT}/ws\n"
-	
-	# Create necessary directories
-	@mkdir -p ${LOG_DIR} ${PROJECTS_DIR}
-	
-	# Start WebSocket server with debug
-	@echo "Starting WebSocket server on port ${WEBSOCKET_PORT}..."
+	@echo "Starting WebSocket server..."
 	@cd websocket && \
-	PYTHONUNBUFFERED=1 \
-	PYTHONPATH=$$PYTHONPATH:. \
-	${PYTHON} -X dev server.py \
-	  --port ${WEBSOCKET_PORT} \
-	  --debug \
-	  --log-level DEBUG \
-	  --log-file ../${LOG_DIR}/websocket-debug.log \
-	  > ../${LOG_DIR}/websocket-debug.log 2>&1 & \
-	echo $$! > ../${WEBSOCKET_PID} && \
-	echo "WebSocket server started (PID: $$!)"
-	
-	# Give WebSocket server a moment to start
-	@echo -n "Waiting for WebSocket server to initialize"
-	@for i in 1 2 3 4 5; do \
-		sleep 1; \
-		echo -n "."; \
-	done
-	@echo ""
-	
-	# Start frontend server with debug
-	@echo "Starting frontend server on port ${FRONTEND_PORT}..."
+	  PYTHONUNBUFFERED=1 python3 -u server.py \
+	    --host ${HOST} \
+	    --port ${WEBSOCKET_PORT} \
+	    --log-level DEBUG \
+	    --debug \
+	    --log-file ${LOG_DIR}/websocket-debug.log &
+	@echo $$! > ${WEBSOCKET_PID}
+	@echo "Starting frontend server..."
 	@cd frontend && \
-	PYTHONUNBUFFERED=1 \
-	PYTHONPATH=$$PYTHONPATH:. \
-	${PYTHON} -X dev server.py \
-	  --port ${FRONTEND_PORT} \
-	  --ws-port ${WEBSOCKET_PORT} \
-	  --debug \
-	  --log-level DEBUG \
-	  --log-file ../${LOG_DIR}/frontend-debug.log \
-	  > ../${LOG_DIR}/frontend-debug.log 2>&1 & \
-	echo $$! > ../${FRONTEND_PID} && \
-	echo "Frontend server started (PID: $$!)"
-	
-	# Open browser after a short delay
-	@echo -n "\n🌐 Waiting for servers to be ready"
-	@for i in 1 2 3 4 5; do \
-		sleep 1; \
-		echo -n "."; \
-	done
-	@echo ""
-	
-	@echo "\n📋 Tailing debug logs (Ctrl+C to stop)..."
-	@tail -f ${LOG_DIR}/*-debug.log
+	  PYTHONUNBUFFERED=1 python3 -u server.py \
+	    --host ${HOST} \
+	    --port ${FRONTEND_PORT} \
+	    --ws-port ${WEBSOCKET_PORT} \
+	    --log-level DEBUG \
+	    --debug \
+	    --log-file ${LOG_DIR}/frontend-debug.log &
+	@echo $$! > ${FRONTEND_PID}
+	@echo "Servers started in debug mode. Logs are being written to ${LOG_DIR}/*.log"
 
-# Stop all services
+# Stop development servers
 stop:
-	@echo "\n🛑 Stopping services..."
-	@for pid_file in ${WEBSOCKET_PID} ${FRONTEND_PID}; do \
-		if [ -f "$$pid_file" ]; then \
-			pid=$$(cat $$pid_file); \
-			if ps -p $$pid > /dev/null; then \
-				echo "Stopping process $$pid..."; \
-				kill -TERM $$pid 2>/dev/null || true; \
-				( sleep 1 && kill -9 $$pid 2>/dev/null ) & \
-				wait $$pid 2>/dev/null || true; \
-			fi; \
-			rm -f "$$pid_file"; \
-		fi; \
-	done
-	@# Ensure ports are freed
+	@echo "\n🛑 Stopping servers..."
+	@if [ -f ${FRONTEND_PID} ]; then \
+		kill -9 $$(cat ${FRONTEND_PID}) 2>/dev/null || true; \
+		rm -f ${FRONTEND_PID}; \
+	fi
+	@if [ -f ${WEBSOCKET_PID} ]; then \
+		kill -9 $$(cat ${WEBSOCKET_PID}) 2>/dev/null || true; \
+		rm -f ${WEBSOCKET_PID}; \
+	fi
+	@# Kill any processes using the ports
 	@for port in ${FRONTEND_PORT} ${WEBSOCKET_PORT}; do \
-		if lsof -i :$$port >/dev/null 2>&1; then \
-			echo "Freeing port $$port..."; \
-			fuser -k $$port/tcp >/dev/null 2>&1 || true; \
-		fi; \
+		lsof -ti :$$port | xargs -r kill -9 2>/dev/null || true; \
 	done
-	@echo "All services stopped."
+	@echo "Servers stopped"
 
-# Clean temporary files and logs
+# Show logs
+logs:
+	@echo "\n📄 Showing logs (Ctrl+C to exit)..."
+	@tail -f ${LOG_DIR}/*.log
+
+# Clean up
 clean: stop
 	@echo "\n🧹 Cleaning up..."
-	rm -rf ${LOG_DIR}/*.log
-	find . -name "*.pyc" -delete
-	find . -name "__pycache__" -delete
+	@rm -rf ${LOG_DIR}/*.log
+	@rm -f ${FRONTEND_PID} ${WEBSOCKET_PID}
+	@find . -type d -name "__pycache__" -exec rm -r {} + 2>/dev/null || true
+	@find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	@find . -type f -name "*.pyo" -delete 2>/dev/null || true
+	@find . -type d -name ".pytest_cache" -exec rm -r {} + 2>/dev/null || true
+	@echo "Clean complete"
 
 # Run tests
 test:

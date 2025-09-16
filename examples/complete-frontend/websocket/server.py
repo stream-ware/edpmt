@@ -87,10 +87,8 @@ class WebSocketServer:
             logging.debug("Debug mode enabled")
         
         self.app = web.Application()
-        self.routes = web.RouteTableDef()
         self.setup_middleware()
         self.setup_routes()
-        self.app.add_routes(self.routes)
         
         # WebSocket connections
         self.websockets = set()
@@ -266,11 +264,16 @@ class WebSocketServer:
 
     def setup_routes(self):
         """Set up all routes for the WebSocket server."""
-        self.routes.add_get('/ws', self.websocket_handler)
+        # Add WebSocket route
+        self.app.add_routes([web.get('/ws', self.websocket_handler)])
         
-        # Add HTTP endpoints for WebSocket-fallback
-        self.routes.add_get('/api/status', self.status_handler)
-        self.routes.add_post('/api/execute', self.execute_handler)
+        # Add status endpoint
+        self.app.add_routes([web.get('/status', self.status_handler)])
+        
+        # Add static files if needed
+        static_path = Path(__file__).parent.parent / 'static'
+        if static_path.exists():
+            self.app.add_routes([web.static('/static/', path=str(static_path))])
 
     async def status_handler(self, request):
         """Return system status for HTTP fallback."""
