@@ -14,6 +14,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Test configuration
+EDPMT_CMD="./bin/edpmt"
 EDPMT_URL="https://localhost:8888"
 HTTP_URL="http://localhost:8888"
 TEST_RESULTS_DIR="test-results"
@@ -88,7 +89,7 @@ start_test_server() {
     echo -e "${BLUE}🚀 Starting EDPMT server for testing...${NC}"
     
     # Try to start server
-    edpmt server --dev --port 8888 > "$TEST_RESULTS_DIR/server_${TIMESTAMP}.log" 2>&1 &
+    $EDPMT_CMD server --dev --port 8888 > "$TEST_RESULTS_DIR/server_${TIMESTAMP}.log" 2>&1 &
     SERVER_PID=$!
     
     echo "Server PID: $SERVER_PID" >> "$LOG_FILE"
